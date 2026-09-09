@@ -17,22 +17,22 @@ public class PostInMemoryRepository : IPostRepository
         posts.Add(new Post
         {
             Id = 1,
-            Title = "Welcome to the forum",
-            Body = "This is the very first post. Say hello!",
+            Title = "Welcome to the .NET forum",
+            Body = "First post. Say hello!",
             UserId = 1
         });
         posts.Add(new Post
         {
             Id = 2,
             Title = "Anyone else struggling with async?",
-            Body = "I keep forgetting to await things and nothing happens.",
+            Body = "I await all day, nothing happens.",
             UserId = 2
         });
         posts.Add(new Post
         {
             Id = 3,
-            Title = "Best coffee near campus",
-            Body = "The place across the street is criminally underrated.",
+            Title = "Best coffee in Horsens?",
+            Body = "The one here is bitter.",
             UserId = 3
         });
     }

@@ -15,8 +15,8 @@ public class UserInMemoryRepository : IUserRepository
     private void AddDummyData()
     {
         users.Add(new User { Id = 1, Name = "andreas", Password = "pass123" });
-        users.Add(new User { Id = 2, Name = "maria", Password = "hunter2" });
-        users.Add(new User { Id = 3, Name = "jonas", Password = "letmein" });
+        users.Add(new User { Id = 2, Name = "John", Password = "jj233" });
+        users.Add(new User { Id = 3, Name = "Svend", Password = "123456abc" });
     }
 
     public Task<User> AddAsync(User user)

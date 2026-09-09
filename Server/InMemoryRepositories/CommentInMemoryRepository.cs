@@ -14,11 +14,11 @@ public class CommentInMemoryRepository : ICommentRepository
 
     private void AddDummyData()
     {
-        comments.Add(new Comment { Id = 1, Body = "Hello right back!", UserId = 2, PostId = 1 });
-        comments.Add(new Comment { Id = 2, Body = "Great to be here.", UserId = 3, PostId = 1 });
-        comments.Add(new Comment { Id = 3, Body = "Await everything, that is my strategy.", UserId = 1, PostId = 2 });
-        comments.Add(new Comment { Id = 4, Body = "Same, took me a week to get it.", UserId = 3, PostId = 2 });
-        comments.Add(new Comment { Id = 5, Body = "Strongly disagree, it is burnt.", UserId = 1, PostId = 3 });
+        comments.Add(new Comment { Id = 1, Body = "That's absurd!", UserId = 2, PostId = 1 });
+        comments.Add(new Comment { Id = 2, Body = "But why?.", UserId = 3, PostId = 1 });
+        comments.Add(new Comment { Id = 3, Body = ".NET is better than Java imo", UserId = 1, PostId = 2 });
+        comments.Add(new Comment { Id = 4, Body = "wat.", UserId = 3, PostId = 2 });
+        comments.Add(new Comment { Id = 5, Body = "Big if true.", UserId = 1, PostId = 3 });
     }
 
     public Task<Comment> AddAsync(Comment comment)
