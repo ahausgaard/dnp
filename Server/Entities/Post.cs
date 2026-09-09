@@ -1,14 +1,20 @@
-namespace ass1;
+namespace Entities;
 
 public class Post
 {
-    private string Title { get; set; }
-    private string Body { get; set; }
     public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
     public int UserId { get; set; }
-    
-    public Post(string title)
+
+    public Post()
     {
-        this.Title = title;
+    }
+
+    public Post(string title, string body, int userId)
+    {
+        Title = title;
+        Body = body;
+        UserId = userId;
     }
 }

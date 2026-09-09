@@ -1,19 +1,23 @@
-namespace ass1;
+namespace Entities;
 
 public class User
 {
-    private string name { get; set;}
-    private string password { get; set; }
-    public int id { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+
+    public User()
+    {
+    }
 
     public User(string name, string password)
     {
-        this.name = name;
-        this.password = password;
+        Name = name;
+        Password = password;
     }
 
-    public Post createPost(string title)
+    public Post CreatePost(string title, string body)
     {
-        return new Post(title);
+        return new Post(title, body, Id);
     }
 }
