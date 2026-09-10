@@ -7,5 +7,5 @@ IUserRepository userRepository = new UserInMemoryRepository();
 ICommentRepository commentRepository = new CommentInMemoryRepository();
 IPostRepository postRepository = new PostInMemoryRepository();
 
-ClipApp cliApp = new ClipApp(userRepository, commentRepository, postRepository);
+CliApp cliApp = new CliApp(userRepository, commentRepository, postRepository);
 await cliApp.StartAsync();
