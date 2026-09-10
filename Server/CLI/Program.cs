@@ -2,7 +2,7 @@
 using InMemoryRepositories;
 using RepositoryContracts;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Starting CLI app...");
 IUserRepository userRepository = new UserInMemoryRepository();
 ICommentRepository commentRepository = new CommentInMemoryRepository();
 IPostRepository postRepository = new PostInMemoryRepository();
