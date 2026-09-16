@@ -7,14 +7,15 @@ public class ManageUsersView
     private readonly CreateUserView createUserView;
     private readonly ListUsersView listUsersView;
 
-    public ManageUsersView(IUserRepository userRepository)
+    public ManageUsersView(IUserRepository userRepository, IPostRepository postRepository)
     {
         createUserView = new CreateUserView(userRepository);
-        listUsersView = new ListUsersView(userRepository);
+        listUsersView = new ListUsersView(userRepository, postRepository);
     }
 
     public async Task ShowAsync()
     {
+        ConsoleOutput.ClearScreen();
         bool showing = true;
         while (showing)
         {
@@ -29,8 +30,14 @@ public class ManageUsersView
 
             switch (choice.Trim())
             {
-                case "1": await createUserView.ShowAsync(); break;
-                case "2": await listUsersView.ShowAsync(); break;
+                case "1":
+                    await createUserView.ShowAsync();
+                    ConsoleOutput.ClearScreen();
+                    break;
+                case "2":
+                    await listUsersView.ShowAsync();
+                    ConsoleOutput.ClearScreen();
+                    break;
                 case "0": showing = false; break;
                 default: Console.WriteLine($"Invalid choice: {choice}"); break;
             }

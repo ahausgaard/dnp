@@ -15,6 +15,7 @@ public class CreateUserView
 
     public async Task ShowAsync()
     {
+        ConsoleOutput.ClearScreen();
         Console.WriteLine("\n--- Create User ---");
         string? name = ConsoleInput.AskFor("Username");
         if (name is null) return;
@@ -29,5 +30,6 @@ public class CreateUserView
         });
 
         Console.WriteLine($"User created: {created.Name} with id {created.Id}");
+        ConsoleOutput.Pause();
     }
 }
