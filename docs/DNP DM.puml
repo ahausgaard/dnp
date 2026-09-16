@@ -1,0 +1,31 @@
+@startuml DNP Domain Model
+
+hide circle
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class User {
+    username: string
+    password: string
+    id: int
+}
+
+class Post {
+    Title: string
+    Body: string
+    id: int
+    UserId: int <<FK>>
+}
+
+class Comment {
+    Body: string
+    id: int
+    UserId: int <<FK>>
+    PostId: int <<FK>>
+}
+
+User "1" -- "0..*" Post : writes >
+User "1" -- "0..*" Comment : comments >
+Post "1" -- "0..*" Comment : has >
+
+@enduml
