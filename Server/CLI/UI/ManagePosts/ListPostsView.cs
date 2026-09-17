@@ -15,17 +15,19 @@ public class ListPostsView
         singlePostView = new SinglePostView(postRepository, userRepository, commentRepository);
     }
 
-    public async Task ShowAsync()
+    public async Task ListPostsAsync()
     {
         ConsoleOutput.ClearScreen();
 
         bool showing = true;
+        List<Post> posts = postRepository.GetMany().OrderBy(p => p.Id).ToList();
+        
         while (showing)
         {
             Console.WriteLine("\n--- Post List ---");
             Console.WriteLine("\nID |  Title  ");
             Console.WriteLine("-------------");
-            foreach (Post post in postRepository.GetMany().OrderBy(p => p.Id))
+            foreach (Post post in posts)
                 Console.WriteLine($"{post.Id}  |  {post.Title}");
 
             Console.WriteLine("\nChoose a post by id or type 0 to go back");
@@ -39,7 +41,7 @@ public class ListPostsView
             {
                 showing = false;
             }
-            else if (int.TryParse(choice, out int id) && postRepository.GetMany().Any(p => p.Id == id))
+            else if (int.TryParse(choice, out int id) && posts.Any(p => p.Id == id))
             {
                 await singlePostView.ShowAsync(id);
                 ConsoleOutput.ClearScreen();

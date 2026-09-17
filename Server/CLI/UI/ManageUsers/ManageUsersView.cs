@@ -21,7 +21,7 @@ public class ManageUsersView
         {
             Console.WriteLine("\n--- Manage Users ---" );
             Console.WriteLine("\n1) Create user" );
-            Console.WriteLine("\n2) List users" );
+            Console.WriteLine("\n2) View users" );
             Console.WriteLine("\n0) Back" );
             Console.Write("> " );
             
@@ -31,11 +31,11 @@ public class ManageUsersView
             switch (choice.Trim())
             {
                 case "1":
-                    await createUserView.ShowAsync();
+                    await createUserView.CreateUserAsync();
                     ConsoleOutput.ClearScreen();
                     break;
                 case "2":
-                    await listUsersView.ShowAsync();
+                    await listUsersView.ListUsersAsync();
                     ConsoleOutput.ClearScreen();
                     break;
                 case "0": showing = false; break;

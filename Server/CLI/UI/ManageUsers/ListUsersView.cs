@@ -14,17 +14,18 @@ public class ListUsersView
         singleUserView = new SingleUserView(userRepository, postRepository);
     }
 
-    public async Task ShowAsync()
+    public async Task ListUsersAsync()
     {
         ConsoleOutput.ClearScreen();
-
+        List<User> users = userRepository.GetMany().OrderBy(u => u.Id).ToList();
         bool showing = true;
+        
         while (showing)
         {
             Console.WriteLine("\n--- User List ---");
             Console.WriteLine("\nID |  Name  ");
             Console.WriteLine("-------------");
-            foreach (User user in userRepository.GetMany().OrderBy(u => u.Id))
+            foreach (User user in users)
                 Console.WriteLine($"{user.Id}  |  {user.Name}");
 
             Console.WriteLine("\nChoose a user by id or type 0 to go back");
@@ -38,7 +39,7 @@ public class ListUsersView
             {
                 showing = false;
             }
-            else if (int.TryParse(choice, out int id) && userRepository.GetMany().Any(u => u.Id == id))
+            else if (int.TryParse(choice, out int id) && users.Any(u => u.Id == id))
             {
                 await singleUserView.ShowAsync(id);
                 ConsoleOutput.ClearScreen();

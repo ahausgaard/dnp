@@ -1,35 +1,32 @@
 using Entities;
 using RepositoryContracts;
 
-namespace InMemoryRepositories;
+namespace FileRepositories;
 
-public class UserInMemoryRepository : IUserRepository
+public class UserFileRepository : IUserRepository
 {
-    private readonly List<User> users = new();
-
-    public UserInMemoryRepository()
+    private readonly string filePath = "users.json";
+    
+    public UserFileRepository()
     {
-        AddDummyData();
+        if (!File.Exists(filePath))
+            File.WriteAllText(filePath, "[]");
     }
 
-    private void AddDummyData()
+    public async Task<User> AddAsync(User user)
     {
-        users.Add(new User { Id = 1, Name = "andreas", Password = "pass123" });
-        users.Add(new User { Id = 2, Name = "John", Password = "jj233" });
-        users.Add(new User { Id = 3, Name = "Svend", Password = "123456abc" });
-    }
-
-    public Task<User> AddAsync(User user)
-    {
+        List<User> users = await JsonFile.LoadAsync<User>(filePath);
         user.Id = users.Any()
             ? users.Max(u => u.Id) + 1
             : 1;
         users.Add(user);
-        return Task.FromResult(user);
+        await JsonFile.SaveAsync(filePath, users);
+        return user;
     }
 
-    public Task UpdateAsync(User user)
+    public async Task UpdateAsync(User user)
     {
+        List<User> users = await JsonFile.LoadAsync<User>(filePath);
         User? existingUser = users.SingleOrDefault(u => u.Id == user.Id);
         if (existingUser is null)
         {
@@ -39,12 +36,12 @@ public class UserInMemoryRepository : IUserRepository
 
         int index = users.IndexOf(existingUser);
         users[index] = user;
-
-        return Task.CompletedTask;
+        await JsonFile.SaveAsync(filePath, users);
     }
 
-    public Task DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
+        List<User> users = await JsonFile.LoadAsync<User>(filePath);
         User? userToRemove = users.SingleOrDefault(u => u.Id == id);
         if (userToRemove is null)
         {
@@ -53,23 +50,24 @@ public class UserInMemoryRepository : IUserRepository
         }
 
         users.Remove(userToRemove);
-        return Task.CompletedTask;
+        await JsonFile.SaveAsync(filePath, users);
     }
 
-    public Task<User> GetSingleAsync(int id)
+    public async Task<User> GetSingleAsync(int id)
     {
+        List<User> users = await JsonFile.LoadAsync<User>(filePath);
         User? user = users.SingleOrDefault(u => u.Id == id);
         if (user is null)
         {
             throw new InvalidOperationException(
                 $"User with ID '{id}' not found");
         }
-
-        return Task.FromResult(user);
+        return user;
     }
-
+    
     public IQueryable<User> GetMany()
     {
+        List<User> users = JsonFile.Load<User>(filePath);
         return users.AsQueryable();
     }
 }

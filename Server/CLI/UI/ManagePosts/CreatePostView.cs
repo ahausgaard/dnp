@@ -14,7 +14,7 @@ public class CreatePostView
         this.userRepository = userRepository;
     }
 
-    public async Task ShowAsync()
+    public async Task CreatePostAsync()
     {
         ConsoleOutput.ClearScreen();
 

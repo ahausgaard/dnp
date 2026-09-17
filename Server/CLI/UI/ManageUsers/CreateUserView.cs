@@ -13,7 +13,7 @@ public class CreateUserView
         this.userRepository = userRepository;
     }
 
-    public async Task ShowAsync()
+    public async Task CreateUserAsync()
     {
         ConsoleOutput.ClearScreen();
         Console.WriteLine("\n--- Create User ---");

@@ -1,37 +1,33 @@
 using Entities;
 using RepositoryContracts;
 
-namespace InMemoryRepositories;
+namespace FileRepositories;
 
-public class CommentInMemoryRepository : ICommentRepository
+public class CommentFileRepository : ICommentRepository
 {
-    private readonly List<Comment> comments = new();
-
-    public CommentInMemoryRepository()
+    private readonly string filePath = "comments.json";
+    
+    public CommentFileRepository()
     {
-        AddDummyData();
+        if (!File.Exists(filePath))
+            File.WriteAllText(filePath, "[]");
     }
 
-    private void AddDummyData()
+    public async Task<Comment> AddAsync(Comment comment)
     {
-        comments.Add(new Comment { Id = 1, Body = "That's absurd!", UserId = 2, PostId = 1 });
-        comments.Add(new Comment { Id = 2, Body = "But why?.", UserId = 3, PostId = 1 });
-        comments.Add(new Comment { Id = 3, Body = ".NET is better than Java imo", UserId = 1, PostId = 2 });
-        comments.Add(new Comment { Id = 4, Body = "wat.", UserId = 3, PostId = 2 });
-        comments.Add(new Comment { Id = 5, Body = "Big if true.", UserId = 1, PostId = 3 });
-    }
-
-    public Task<Comment> AddAsync(Comment comment)
-    {
+        List<Comment> comments = await JsonFile.LoadAsync<Comment>(filePath);
         comment.Id = comments.Any()
             ? comments.Max(c => c.Id) + 1
             : 1;
         comments.Add(comment);
-        return Task.FromResult(comment);
+        await JsonFile.SaveAsync(filePath, comments);
+        return comment;
     }
 
-    public Task UpdateAsync(Comment comment)
+    public async Task UpdateAsync(Comment comment)
     {
+        List<Comment> comments = await JsonFile.LoadAsync<Comment>(filePath);
+        
         Comment? existingComment = comments.SingleOrDefault(c => c.Id == comment.Id);
         if (existingComment is null)
         {
@@ -41,12 +37,13 @@ public class CommentInMemoryRepository : ICommentRepository
 
         int index = comments.IndexOf(existingComment);
         comments[index] = comment;
-
-        return Task.CompletedTask;
+        
+        await JsonFile.SaveAsync(filePath, comments);
     }
 
-    public Task DeleteAsync(int id)
+    public async Task DeleteAsync(int id)
     {
+        List<Comment> comments = await JsonFile.LoadAsync<Comment>(filePath);
         Comment? commentToRemove = comments.SingleOrDefault(c => c.Id == id);
         if (commentToRemove is null)
         {
@@ -55,11 +52,12 @@ public class CommentInMemoryRepository : ICommentRepository
         }
 
         comments.Remove(commentToRemove);
-        return Task.CompletedTask;
+        await JsonFile.SaveAsync(filePath, comments);
     }
 
-    public Task<Comment> GetSingleAsync(int id)
+    public async Task<Comment> GetSingleAsync(int id)
     {
+        List<Comment> comments = await JsonFile.LoadAsync<Comment>(filePath);
         Comment? comment = comments.SingleOrDefault(c => c.Id == id);
         if (comment is null)
         {
@@ -67,11 +65,12 @@ public class CommentInMemoryRepository : ICommentRepository
                 $"Comment with ID '{id}' not found");
         }
 
-        return Task.FromResult(comment);
+        return comment;
     }
 
     public IQueryable<Comment> GetMany()
     {
+        List<Comment> comments = JsonFile.Load<Comment>(filePath);
         return comments.AsQueryable();
     }
 }

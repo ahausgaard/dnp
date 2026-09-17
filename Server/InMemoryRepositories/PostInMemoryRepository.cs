@@ -55,8 +55,8 @@ public class PostInMemoryRepository : IPostRepository
                 $"Post with ID '{post.Id}' not found");
         }
 
-        posts.Remove(existingPost);
-        posts.Add(post);
+        int index = posts.IndexOf(existingPost);
+        posts[index] = post;
 
         return Task.CompletedTask;
     }

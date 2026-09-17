@@ -33,11 +33,11 @@ public class ManagePostsView
             switch (choice.Trim())
             {
                 case "1":
-                    await createPostView.ShowAsync();
+                    await createPostView.CreatePostAsync();
                     ConsoleOutput.ClearScreen();
                     break;
                 case "2":
-                    await listPostsView.ShowAsync();
+                    await listPostsView.ListPostsAsync();
                     ConsoleOutput.ClearScreen();
                     break;
                 case "0": showing = false; break;
