@@ -84,6 +84,9 @@ public class SinglePostView
                 case "4":
                     string? newBody = ConsoleInput.AskFor("Comment");
                     if (newBody is null) break;
+                    Console.WriteLine("\nID  |  Name");
+                    foreach (User user in userRepository.GetMany().OrderBy(u => u.Id))
+                        Console.WriteLine($"{user.Id}  |  {user.Name}");
                     int? authorId = ConsoleInput.AskForUserId(userRepository);
                     if (authorId is null) break;
                     await commentRepository.AddAsync(new Comment
