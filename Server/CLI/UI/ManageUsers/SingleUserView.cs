@@ -27,7 +27,7 @@ public class SingleUserView
                 .OrderBy(p => p.Id)
                 .ToList();
 
-            Console.WriteLine($"\n--- User {user.Id}: {user.Name} ---");
+            Console.WriteLine($"\n--- User {user.Id}: {user.UserName} ---");
 
             Console.WriteLine("\nPosts:");
             if (posts.Count == 0)
@@ -50,7 +50,7 @@ public class SingleUserView
                 case "1":
                     string? name = ConsoleInput.AskFor("New username");
                     if (name is null) break;
-                    user.Name = name;
+                    user.UserName = name;
                     await userRepository.UpdateAsync(user);
                     Console.WriteLine("Username updated");
                     break;
@@ -64,10 +64,10 @@ public class SingleUserView
                     break;
 
                 case "3":
-                    Console.Write($"Delete {user.Name}? Their {posts.Count} post(s) will be kept. (y/n): ");
+                    Console.Write($"Delete {user.UserName}? Their {posts.Count} post(s) will be kept. (y/n): ");
                     if (Console.ReadLine()?.Trim().ToLower() != "y") break;
                     await userRepository.DeleteAsync(user.Id);
-                    Console.WriteLine($"User {user.Name} deleted");
+                    Console.WriteLine($"User {user.UserName} deleted");
                     ConsoleOutput.Pause();
                     return;
 

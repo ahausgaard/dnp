@@ -27,7 +27,7 @@ public class CreatePostView
         
         Console.WriteLine("\nID  |  Name");
         foreach (User user in userRepository.GetMany().OrderBy(u => u.Id))
-            Console.WriteLine($"{user.Id}  |  {user.Name}");
+            Console.WriteLine($"{user.Id}  |  {user.UserName}");
         
         int? userId = ConsoleInput.AskForUserId(userRepository);
         if (userId is null) return;

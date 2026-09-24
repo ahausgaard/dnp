@@ -86,7 +86,7 @@ public class SinglePostView
                     if (newBody is null) break;
                     Console.WriteLine("\nID  |  Name");
                     foreach (User user in userRepository.GetMany().OrderBy(u => u.Id))
-                        Console.WriteLine($"{user.Id}  |  {user.Name}");
+                        Console.WriteLine($"{user.Id}  |  {user.UserName}");
                     int? authorId = ConsoleInput.AskForUserId(userRepository);
                     if (authorId is null) break;
                     await commentRepository.AddAsync(new Comment
@@ -122,7 +122,7 @@ public class SinglePostView
     }
 
     private string AuthorName(int userId)
-        => userRepository.GetMany().SingleOrDefault(u => u.Id == userId)?.Name
+        => userRepository.GetMany().SingleOrDefault(u => u.Id == userId)?.UserName
            ?? $"unknown user {userId}";
 
     private static Comment? AskForComment(List<Comment> comments, string label)

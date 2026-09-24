@@ -26,7 +26,7 @@ public class ListUsersView
             Console.WriteLine("\nID |  Name  ");
             Console.WriteLine("-------------");
             foreach (User user in users)
-                Console.WriteLine($"{user.Id}  |  {user.Name}");
+                Console.WriteLine($"{user.Id}  |  {user.UserName}");
 
             Console.WriteLine("\nChoose a user by id or type 0 to go back");
             Console.Write("> ");

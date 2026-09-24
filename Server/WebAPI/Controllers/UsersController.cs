@@ -20,15 +20,32 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserDto>> AddUser(
         [FromBody] CreateUserDto request)
     {
-        await VerifyUserNameIsAvailableAsync(request.UserName);
+        try
+        {
+            await VerifyUserNameIsAvailableAsync(request
+                .UserName);
+        }
+        catch (InvalidOperationException e)
+        {
+            return Conflict(e.Message);
+        }
 
         User user = new(request.UserName, request.Password);
         User created = await userRepo.AddAsync(user);
         UserDto dto = new()
         {
             Id = created.Id,
-            UserName = created.Username
-        }
-        return Created($"/users/{dto.Id}", created);
+            UserName = created.UserName
+        };
+        return Created($"/users/{dto.Id}", dto);
+    }
+
+    private Task VerifyUserNameIsAvailableAsync(string userName)
+    {
+        bool taken = userRepo.GetMany().Any(u => u.UserName == userName);
+        if (taken)
+            throw new InvalidOperationException(
+                $"Username '{userName}' is already taken");
+        return Task.CompletedTask;
     }
 }
