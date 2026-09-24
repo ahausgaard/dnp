@@ -22,15 +22,18 @@ public class UsersController : ControllerBase
     {
         try
         {
-            await VerifyUserNameIsAvailableAsync(request
-                .UserName);
+            await VerifyUserNameIsAvailableAsync(request.UserName);
         }
         catch (InvalidOperationException e)
         {
             return Conflict(e.Message);
         }
 
-        User user = new(request.UserName, request.Password);
+        User user = new()
+        {
+            UserName = request.UserName,
+            Password = request.Password
+        };
         User created = await userRepo.AddAsync(user);
         UserDto dto = new()
         {

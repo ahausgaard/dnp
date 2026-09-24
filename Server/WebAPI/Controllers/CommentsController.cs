@@ -51,7 +51,7 @@ public class CommentsController : ControllerBase
         return Created($"/comments/{dto.Id}", dto);
     }
 
-    [HttpGet]
+    /*[HttpGet]
     public async Task<ActionResult<CommentDto>> GetSingle(CommentDto request)
     {
         try
@@ -65,6 +65,6 @@ public class CommentsController : ControllerBase
         }
         return Created($"/comments/{dto.Id}", dto);
     }
-    
+    */
     
 }
