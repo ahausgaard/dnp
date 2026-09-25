@@ -1,5 +1,6 @@
 using DTOs;
 using Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RepositoryContracts;
 
@@ -69,6 +70,25 @@ public class UsersController : ControllerBase
         {
             return NotFound(e.Message);
         }
+    }
+
+    [HttpGet]
+    public ActionResult<IEnumerable<UserDto>> GetAllUsers([FromQuery] string? userNameContains)
+    {
+        IQueryable<User> users = userRepo.GetMany();
+
+        if (userNameContains is not null)
+        {
+            users = users.Where(x => x.UserName.Contains(userNameContains));
+        }
+
+        List<UserDto> dtos = users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            UserName = u.UserName
+        }).ToList();
+
+        return Ok(dtos);
     }
 
     [HttpPut("{id:int}")]

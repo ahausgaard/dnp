@@ -74,6 +74,33 @@ public class CommentsController : ControllerBase
         }
     }
 
+    [HttpGet]
+    public ActionResult<IEnumerable<CommentDto>> GetAllComments(
+        [FromQuery] int? userId, [FromQuery] int? postId)
+    {
+        IQueryable<Comment> comments = commentRepo.GetMany();
+        
+        if (userId is not null)
+        {
+            comments = comments.Where(x => x.UserId == userId);
+        }
+
+        if (postId is not null)
+        {
+            comments = comments.Where(x => x.PostId == postId);
+        }
+
+        List<CommentDto> dtos = comments.Select(c => new CommentDto
+        {
+            Id = c.Id,
+            Body = c.Body,
+            UserId = c.UserId,
+            PostId = c.PostId
+        }).ToList();
+
+        return Ok(dtos);
+    }
+
     [HttpPut("{id:int}")]
     public async Task<ActionResult<UpdateCommentDto>> UpdateComment(
         [FromRoute] int id, [FromBody] UpdateCommentDto request)
