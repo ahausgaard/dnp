@@ -13,7 +13,8 @@ public class CommentsController : ControllerBase
     private readonly IUserRepository userRepo;
     private readonly IPostRepository postRepo;
 
-    public CommentsController(ICommentRepository commentRepo, IUserRepository userRepo, IPostRepository postRepo)
+    public CommentsController(ICommentRepository commentRepo,
+        IUserRepository userRepo, IPostRepository postRepo)
     {
         this.commentRepo = commentRepo;
         this.userRepo = userRepo;
@@ -21,7 +22,8 @@ public class CommentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<CommentDto>> AddComment([FromBody] CreateCommentDto request)
+    public async Task<ActionResult<CommentDto>> AddComment(
+        [FromBody] CreateCommentDto request)
     {
         try
         {
@@ -51,20 +53,55 @@ public class CommentsController : ControllerBase
         return Created($"/comments/{dto.Id}", dto);
     }
 
-    /*[HttpGet]
-    public async Task<ActionResult<CommentDto>> GetSingle(CommentDto request)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<CommentDto>> GetSingle([FromRoute] int id)
     {
         try
         {
-            await userRepo.GetSingleAsync(request.UserId);
-            await postRepo.GetSingleAsync(request.PostId);
+            Comment comment = await commentRepo.GetSingleAsync(id);
+            CommentDto dto = new()
+            {
+                Id = comment.Id,
+                Body = comment.Body,
+                UserId = comment.UserId,
+                PostId = comment.PostId
+            };
+            return Ok(dto);
         }
         catch (InvalidOperationException e)
         {
             return NotFound(e.Message);
         }
-        return Created($"/comments/{dto.Id}", dto);
     }
-    */
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<UpdateCommentDto>> UpdateComment(
+        [FromRoute] int id, [FromBody] UpdateCommentDto request)
+    {
+        try
+        {
+            Comment comment = await commentRepo.GetSingleAsync(id);
+            comment.Body = request.Body;
+            await commentRepo.UpdateAsync(comment);
+            return NoContent();
+        }
+        catch (InvalidOperationException e)
+        {
+            return NotFound(e.Message);
+        }
+    }
     
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult<CommentDto>> DeleteSingle([FromRoute] int id)
+    {
+        try
+        {
+            await commentRepo.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (InvalidOperationException e)
+        {
+            return NotFound(e.Message);
+        }
+    }
 }
