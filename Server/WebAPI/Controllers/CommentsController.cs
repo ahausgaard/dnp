@@ -83,11 +83,8 @@ public class CommentsController : ControllerBase
             userId = user.Id;
         }
         
-        
         if (userId is not null)
             comments = comments.Where(c => c.UserId == userId);
-        
-
         
         if (postId is not null)
             comments = comments.Where(c => c.PostId == postId);
@@ -101,7 +98,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<UpdateCommentDto>> UpdateComment(
+    public async Task<ActionResult> UpdateComment(
         [FromRoute] int id, [FromBody] UpdateCommentDto request)
     {
         try
@@ -118,7 +115,7 @@ public class CommentsController : ControllerBase
     }
     
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult<CommentDto>> DeleteSingle([FromRoute] int id)
+    public async Task<ActionResult> DeleteSingle([FromRoute] int id)
     {
         try
         {

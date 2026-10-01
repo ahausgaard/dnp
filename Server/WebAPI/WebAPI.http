@@ -1,6 +1,185 @@
 @WebAPI_HostAddress = http://localhost:5210
 
-GET {{WebAPI_HostAddress}}/weatherforecast/
+### ===================== Users =====================
+
+### Create user
+POST {{WebAPI_HostAddress}}/users
+Content-Type: application/json
+
+{
+  "userName": "alice",
+  "password": "secret"
+}
+
+### Create user with taken username (expect 409 Conflict)
+POST {{WebAPI_HostAddress}}/users
+Content-Type: application/json
+
+{
+  "userName": "alice",
+  "password": "secret"
+}
+
+### Get single user
+GET {{WebAPI_HostAddress}}/users/1
 Accept: application/json
+
+### Get single user that does not exist (expect 404)
+GET {{WebAPI_HostAddress}}/users/9999
+Accept: application/json
+
+### Get all users
+GET {{WebAPI_HostAddress}}/users
+Accept: application/json
+
+### Get users where username contains a string
+GET {{WebAPI_HostAddress}}/users?userNameContains=an
+Accept: application/json
+
+### Update user
+PUT {{WebAPI_HostAddress}}/users/1
+Content-Type: application/json
+
+{
+  "userName": "andreas"
+}
+
+### Update user to a taken username (expect 409 Conflict)
+PUT {{WebAPI_HostAddress}}/users/1
+Content-Type: application/json
+
+{
+  "userName": "John"
+}
+
+### Delete user
+DELETE {{WebAPI_HostAddress}}/users/3
+
+### ===================== Posts =====================
+
+### Create post
+POST {{WebAPI_HostAddress}}/posts
+Content-Type: application/json
+
+{
+  "title": "My first post",
+  "body": "Hello forum!",
+  "userId": 1
+}
+
+### Create post for non-existing user (expect 404)
+POST {{WebAPI_HostAddress}}/posts
+Content-Type: application/json
+
+{
+  "title": "Ghost post",
+  "body": "Nobody wrote this",
+  "userId": 9999
+}
+
+### Get single post
+GET {{WebAPI_HostAddress}}/posts/1
+Accept: application/json
+
+### Get single post with comments
+GET {{WebAPI_HostAddress}}/posts/1?includeComments=true
+Accept: application/json
+
+### Get all posts
+GET {{WebAPI_HostAddress}}/posts
+Accept: application/json
+
+### Get all posts with comments
+GET {{WebAPI_HostAddress}}/posts?includeComments=true
+Accept: application/json
+
+### Get posts where title contains a string
+GET {{WebAPI_HostAddress}}/posts?titleContains=post
+Accept: application/json
+
+### Get posts by user id
+GET {{WebAPI_HostAddress}}/posts?userId=2
+Accept: application/json
+
+### Get posts by username
+GET {{WebAPI_HostAddress}}/posts?userName=John
+Accept: application/json
+
+### Get posts by both user id and username (user id wins, name is ignored)
+GET {{WebAPI_HostAddress}}/posts?userId=1&userName=John
+Accept: application/json
+
+### Get posts by unknown username (expect 404)
+GET {{WebAPI_HostAddress}}/posts?userName=nobody
+Accept: application/json
+
+### Update post
+PUT {{WebAPI_HostAddress}}/posts/1
+Content-Type: application/json
+
+{
+  "title": "Updated title",
+  "body": "Updated body"
+}
+
+### Delete post
+DELETE {{WebAPI_HostAddress}}/posts/4
+
+### ===================== Comments =====================
+
+### Create comment
+POST {{WebAPI_HostAddress}}/comments
+Content-Type: application/json
+
+{
+  "body": "Nice post!",
+  "userId": 2,
+  "postId": 1
+}
+
+### Create comment on non-existing post (expect 404)
+POST {{WebAPI_HostAddress}}/comments
+Content-Type: application/json
+
+{
+  "body": "Where am I?",
+  "userId": 1,
+  "postId": 9999
+}
+
+### Get single comment
+GET {{WebAPI_HostAddress}}/comments/1
+Accept: application/json
+
+### Get all comments
+GET {{WebAPI_HostAddress}}/comments
+Accept: application/json
+
+### Get comments by user id
+GET {{WebAPI_HostAddress}}/comments?userId=1
+Accept: application/json
+
+### Get comments by username
+GET {{WebAPI_HostAddress}}/comments?userName=John
+Accept: application/json
+
+### Get comments on a post
+GET {{WebAPI_HostAddress}}/comments?postId=1
+Accept: application/json
+
+### Get comments by username on a post
+GET {{WebAPI_HostAddress}}/comments?postId=1&userName=andreas
+Accept: application/json
+
+### Update comment
+PUT {{WebAPI_HostAddress}}/comments/1
+Content-Type: application/json
+
+{
+  "body": "Edited comment"
+}
+
+### Delete comment
+DELETE {{WebAPI_HostAddress}}/comments/2
 
 ###
