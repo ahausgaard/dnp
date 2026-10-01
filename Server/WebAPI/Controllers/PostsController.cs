@@ -2,6 +2,7 @@ using DTOs;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
 using RepositoryContracts;
+using WebAPI.Mappings;
 
 namespace WebAPI.Controllers;
 
@@ -25,15 +26,16 @@ public class PostsController : ControllerBase
     public async Task<ActionResult<PostDto>> AddPost(
         [FromBody] CreatePostDto request)
     {
+        User author;
         try
         {
-            await userRepo.GetSingleAsync(request.UserId);
+            author = await userRepo.GetSingleAsync(request.UserId);
         }
         catch (InvalidOperationException e)
         {
             return NotFound(e.Message);
         }
-        
+
         Post post = new()
         {
             Title = request.Title,
@@ -42,17 +44,12 @@ public class PostsController : ControllerBase
         };
 
         Post created = await postRepo.AddAsync(post);
-        PostDto dto = new()
-        {
-            Id = created.Id,
-            Title = created.Title,
-            Body = created.Body,
-            UserId = created.UserId
-        };
+
+        PostDto dto = created.ToDto(author);
 
         return Created($"/posts/{dto.Id}", dto);
     }
-    
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PostDto>> GetSingle(
         [FromRoute] int id, [FromQuery] bool includeComments = false)
@@ -60,26 +57,19 @@ public class PostsController : ControllerBase
         try
         {
             Post post = await postRepo.GetSingleAsync(id);
-            PostDto dto = new()
-            {
-                Id = post.Id,
-                Title = post.Title,
-                Body = post.Body,
-                UserId = post.UserId
-            };
+            Dictionary<int, User> usersById =
+                userRepo.GetMany().ToDictionary(u => u.Id);
 
-            if (includeComments)
-            {
-                dto.Comments = commentRepo.GetMany()
+            List<CommentDto>? comments = includeComments
+                ? commentRepo.GetMany()
                     .Where(c => c.PostId == id)
-                    .Select(c => new CommentDto
-                    {
-                        Id = c.Id,
-                        Body = c.Body,
-                        UserId = c.UserId,
-                        PostId = c.PostId
-                    }).ToList();
-            }
+                    .ToList()
+                    .Select(c => c.ToDto(usersById.GetValueOrDefault(c.UserId)))
+                    .ToList()
+                : null;
+
+            PostDto dto = post.ToDto(usersById.GetValueOrDefault(post.UserId),
+                comments);
             return Ok(dto);
         }
         catch (InvalidOperationException e)
@@ -90,72 +80,57 @@ public class PostsController : ControllerBase
 
     [HttpGet]
     public ActionResult<IEnumerable<PostDto>> GetAllPosts(
-        [FromQuery] string? titleContains, [FromQuery] int? userId,  [FromQuery] string? userName, [FromQuery] bool includeComments = false)
+        [FromQuery] string? titleContains, [FromQuery] int? userId,
+        [FromQuery] string? userName, [FromQuery] bool includeComments = false)
     {
         IQueryable<Post> posts = postRepo.GetMany();
+
+        Dictionary<int, User> usersById =
+            userRepo.GetMany().ToDictionary(u => u.Id);
 
         if (titleContains is not null)
         {
             posts = posts.Where(x => x.Title.Contains(titleContains));
         }
 
-        if (userId is not null)
+        if (userId is null && userName is not null)
         {
-            posts = posts.Where(x => x.UserId == userId);
-        }
-
-        if (userName is not null)
-        {
-            User? user = userRepo.GetMany()
-                .SingleOrDefault(x => x.UserName == userName);
-
+            User? user =
+                usersById.Values.SingleOrDefault(u => u.UserName == userName);
             if (user is null)
-            {
                 return NotFound($"User {userName} not found");
-            }
-
-            posts = posts.Where(p => p.UserId == user.Id);
+            userId = user.Id;
         }
-        
-        
 
-        List<PostDto> dtos = posts.Select(p => new PostDto()
-        {
-            Id = p.Id,
-            Title = p.Title,
-            Body = p.Body,
-            UserId = p.UserId,
-        }).ToList();
-        
-        if (includeComments)
-        {
-            List<int> postIds = dtos.Select(p => p.Id).ToList();
+        if (userId is not null)
+            posts = posts.Where(x => x.UserId == userId);
 
-            Dictionary<int, List<CommentDto>> commentsByPost = commentRepo
-                .GetMany()
-                .Where(c => postIds.Contains(c.PostId))
-                .Select(c => new CommentDto
-                {
-                    Id = c.Id,
-                    Body = c.Body,
-                    UserId = c.UserId,
-                    PostId = c.PostId
-                })
+        List<Post> postList = posts.ToList();
+
+        Dictionary<int, List<CommentDto>> commentsByPost = includeComments
+            ? commentRepo.GetMany()
                 .ToList()
                 .GroupBy(c => c.PostId)
-                .ToDictionary(g => g.Key, g => g.ToList());
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(c =>
+                            c.ToDto(usersById.GetValueOrDefault(c.UserId)))
+                        .ToList())
+            : [];
 
-            foreach (PostDto dto in dtos)
-            {
-                dto.Comments = commentsByPost.GetValueOrDefault(dto.Id, new List<CommentDto>());
-            }
-        }
-        
+        List<PostDto> dtos = postList
+            .Select(p => p.ToDto(usersById.GetValueOrDefault(p.UserId),
+                includeComments
+                    ? commentsByPost.GetValueOrDefault(p.Id, [])
+                    : null))
+            .ToList();
+
         return Ok(dtos);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<UpdatePostDto>> UpdatePost([FromRoute] int id, [FromBody] UpdatePostDto request)
+    public async Task<ActionResult> UpdatePost(
+        [FromRoute] int id, [FromBody] UpdatePostDto request)
     {
         try
         {
@@ -170,9 +145,9 @@ public class PostsController : ControllerBase
             return NotFound(e.Message);
         }
     }
-    
+
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult<PostDto>> DeleteSingle([FromRoute] int id)
+    public async Task<ActionResult> DeleteSingle([FromRoute] int id)
     {
         try
         {
@@ -184,6 +159,4 @@ public class PostsController : ControllerBase
             return NotFound(e.Message);
         }
     }
-    
-    
 }

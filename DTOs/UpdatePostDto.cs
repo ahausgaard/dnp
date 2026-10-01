@@ -1,4 +1,4 @@
-namespace WebAPI.Controllers;
+namespace DTOs;
 
 public class UpdatePostDto
 {

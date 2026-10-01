@@ -2,6 +2,7 @@ using DTOs;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
 using RepositoryContracts;
+using WebAPI.Mappings;
 
 namespace WebAPI.Controllers;
 
@@ -25,9 +26,10 @@ public class CommentsController : ControllerBase
     public async Task<ActionResult<CommentDto>> AddComment(
         [FromBody] CreateCommentDto request)
     {
+        User author;
         try
         {
-            await userRepo.GetSingleAsync(request.UserId);
+            author = await userRepo.GetSingleAsync(request.UserId);
             await postRepo.GetSingleAsync(request.PostId);
         }
         catch (InvalidOperationException e)
@@ -41,15 +43,11 @@ public class CommentsController : ControllerBase
             UserId = request.UserId,
             PostId = request.PostId
         };
+        
         Comment created = await commentRepo.AddAsync(comment);
 
-        CommentDto dto = new()
-        {
-            Id = created.Id,
-            Body = created.Body,
-            UserId = created.UserId,
-            PostId = created.PostId
-        };
+        CommentDto dto = created.ToDto(author);
+        
         return Created($"/comments/{dto.Id}", dto);
     }
 
@@ -59,14 +57,9 @@ public class CommentsController : ControllerBase
         try
         {
             Comment comment = await commentRepo.GetSingleAsync(id);
-            CommentDto dto = new()
-            {
-                Id = comment.Id,
-                Body = comment.Body,
-                UserId = comment.UserId,
-                PostId = comment.PostId
-            };
-            return Ok(dto);
+            User? author = userRepo.GetMany().SingleOrDefault(u => u.Id == comment.UserId);
+            
+            return Ok(comment.ToDto(author));
         }
         catch (InvalidOperationException e)
         {
@@ -76,28 +69,34 @@ public class CommentsController : ControllerBase
 
     [HttpGet]
     public ActionResult<IEnumerable<CommentDto>> GetAllComments(
-        [FromQuery] int? userId, [FromQuery] int? postId)
+        [FromQuery] int? userId, [FromQuery] string? userName, [FromQuery] int? postId)
     {
         IQueryable<Comment> comments = commentRepo.GetMany();
+        Dictionary<int, User> usersById =
+            userRepo.GetMany().ToDictionary(u => u.Id);
+        
+        if (userId is null && userName is not null)
+        {
+            User? user = usersById.Values.SingleOrDefault(u => u.UserName == userName);
+            if (user is null)
+                return NotFound($"User {userName} not found");
+            userId = user.Id;
+        }
+        
         
         if (userId is not null)
-        {
-            comments = comments.Where(x => x.UserId == userId);
-        }
+            comments = comments.Where(c => c.UserId == userId);
+        
 
+        
         if (postId is not null)
-        {
-            comments = comments.Where(x => x.PostId == postId);
-        }
+            comments = comments.Where(c => c.PostId == postId);
 
-        List<CommentDto> dtos = comments.Select(c => new CommentDto
-        {
-            Id = c.Id,
-            Body = c.Body,
-            UserId = c.UserId,
-            PostId = c.PostId
-        }).ToList();
-
+        List<CommentDto> dtos = comments
+            .ToList()
+            .Select(c => c.ToDto(usersById.GetValueOrDefault(c.UserId)))
+            .ToList();
+        
         return Ok(dtos);
     }
 
