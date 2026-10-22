@@ -6,7 +6,7 @@ public class HttpCommentService(HttpClient client) : ICommentService
 {
     public async Task<CommentDto> AddCommentAsync(CreateCommentDto request)
     {
-        var response = await client.PostAsJsonAsync("posts", request);
+        var response = await client.PostAsJsonAsync("comments", request);
         if(!response.IsSuccessStatusCode)
             throw new Exception(await response.Content.ReadAsStringAsync());
 
