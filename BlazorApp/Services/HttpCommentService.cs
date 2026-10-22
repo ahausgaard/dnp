@@ -22,18 +22,26 @@ public class HttpCommentService(HttpClient client) : ICommentService
         return (await response.Content.ReadFromJsonAsync<CommentDto>())!;
     }
 
-    public Task<List<CommentDto>> GetCommentsAsync()
+    public async Task<List<CommentDto>> GetCommentsAsync()
     {
-        throw new NotImplementedException();
+        var response = await client.GetAsync("comments");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<List<CommentDto>>())!;
     }
 
-    public Task UpdateCommentAsync(int id, UpdateCommentDto request)
+    public async Task UpdateCommentAsync(int id, UpdateCommentDto request)
     {
-        throw new NotImplementedException();
+        var response = await client.PutAsJsonAsync($"comments/{id}", request);
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
     }
 
-    public Task DeleteCommentAsync(int id)
+    public async Task DeleteCommentAsync(int id)
     {
-        throw new NotImplementedException();
+        var response = await client.DeleteAsync($"comments/{id}");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
     }
 }

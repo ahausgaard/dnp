@@ -22,18 +22,26 @@ public class HttpUserService(HttpClient client) : IUserService
         return (await response.Content.ReadFromJsonAsync<UserDto>())!;
     }
 
-    public Task<List<UserDto>> GetUsersAsync()
+    public async Task<List<UserDto>> GetUsersAsync()
     {
-        throw new NotImplementedException();
+        var response = await client.GetAsync("users");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<List<UserDto>>())!;
     }
 
-    public Task UpdateUserAsync(int id, UpdateUserDto request)
+    public async Task UpdateUserAsync(int id, UpdateUserDto request)
     {
-        throw new NotImplementedException();
+        var response = await client.PutAsJsonAsync($"users/{id}", request);
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
     }
 
-    public Task DeleteUserAsync(int id)
+    public async Task DeleteUserAsync(int id)
     {
-        throw new NotImplementedException();
+        var response = await client.DeleteAsync($"users/{id}");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
     }
 }

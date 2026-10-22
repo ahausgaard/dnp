@@ -24,18 +24,26 @@ public class HttpPostService(HttpClient client) : IPostService
         return (await response.Content.ReadFromJsonAsync<PostDto>())!;
     }
 
-    public Task<List<PostDto>> GetPostsAsync()
+    public async Task<List<PostDto>> GetPostsAsync()
     {
-        throw new NotImplementedException();
+        var response = await client.GetAsync("posts");
+        if (!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<List<PostDto>>())!;
     }
 
-    public Task UpdatePostAsync(int id, UpdatePostDto request)
+    public async Task UpdatePostAsync(int id, UpdatePostDto request)
     {
-        throw new NotImplementedException();
+        var response = await client.PutAsJsonAsync($"posts/{id}", request);
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
     }
 
-    public Task DeletePostAsync(int id)
+    public async Task DeletePostAsync(int id)
     {
-        throw new NotImplementedException();
+        var response = await client.DeleteAsync($"posts/{id}");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
     }
 }
