@@ -2,24 +2,24 @@ using DTOs;
 
 namespace BlazorApp.Services;
 
-public class HttpUserService : IUserService
+public class HttpUserService(HttpClient client) : IUserService
 {
-    private readonly HttpClient client;
-    
-    
-    public HttpUserService(HttpClient client)
+    public async Task<UserDto> AddUserAsync(CreateUserDto request)
     {
-        this.client = client;
-    }
-    
-    public Task<UserDto> AddUserAsync(CreateUserDto request)
-    {
-        throw new NotImplementedException();
+        var response = await client.PostAsJsonAsync("users", request);
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<UserDto>())!;
     }
 
-    public Task<UserDto> GetUserAsync(int id)
+    public async Task<UserDto> GetUserAsync(int id)
     {
-        throw new NotImplementedException();
+        var response = await client.GetAsync($"users/{id}");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<UserDto>())!;
     }
 
     public Task<List<UserDto>> GetUsersAsync()

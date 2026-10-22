@@ -2,16 +2,24 @@ using DTOs;
 
 namespace BlazorApp.Services;
 
-public class HttpCommentService : ICommentService
+public class HttpCommentService(HttpClient client) : ICommentService
 {
-    public Task<CommentDto> AddCommentAsync(CreateCommentDto request)
+    public async Task<CommentDto> AddCommentAsync(CreateCommentDto request)
     {
-        throw new NotImplementedException();
+        var response = await client.PostAsJsonAsync("posts", request);
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<CommentDto>())!;
     }
 
-    public Task<CommentDto> GetCommentAsync(int id)
+    public async Task<CommentDto> GetCommentAsync(int id)
     {
-        throw new NotImplementedException();
+        var response = await client.GetAsync($"comments/{id}");
+        if(!response.IsSuccessStatusCode)
+            throw new Exception(await response.Content.ReadAsStringAsync());
+
+        return (await response.Content.ReadFromJsonAsync<CommentDto>())!;
     }
 
     public Task<List<CommentDto>> GetCommentsAsync()
