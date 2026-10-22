@@ -1,0 +1,45 @@
+@page "/Users"
+@using DTOs
+@using BlazorApp.Services
+@inject IUserService UserService
+<h3>Users</h3>
+
+@if (error is not null)
+{
+    <p style="color:red">@error</p>
+}
+else if (users is null)
+{
+    <p>Loading...</p>
+}
+else if (users.Count == 0)
+{
+    <p>No users yet.</p>
+}
+else
+{
+    @foreach (var user in users)
+    {
+        <div>
+            <h4><a href="Users/@user.Id">@user.UserName</a></h4>
+        </div>
+    }
+}
+
+@code {
+    private List<UserDto>? users;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = await UserService.GetUsersAsync();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+
+}

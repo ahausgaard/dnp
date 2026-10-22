@@ -23,7 +23,7 @@ else
     {
         <div>
             <h4><a href="Posts/@post.Id">@post.Title</a></h4>
-            <small>by @post.Author?.UserName</small>
+            <small><a href="Users/@post.Author.Id">by @post.Author?.UserName</a></small>
         </div>
     }
 }
