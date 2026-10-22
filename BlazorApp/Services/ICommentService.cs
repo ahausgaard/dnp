@@ -4,9 +4,9 @@ namespace BlazorApp.Services;
 
 public interface ICommentService
 {
-    public Task<CommentDto> AddCommentAsync(CreateCommentDto request);
-    public Task<CommentDto> GetCommentAsync(int id);
-    public Task<List<CommentDto>> GetCommentsAsync();
-    public Task UpdateCommentAsync(int id, UpdateCommentDto request);
-    public Task DeleteCommentAsync(int id);
+    Task<CommentDto> AddCommentAsync(CreateCommentDto request);
+    Task<CommentDto> GetCommentAsync(int id);
+    Task<List<CommentDto>> GetCommentsAsync();
+    Task UpdateCommentAsync(int id, UpdateCommentDto request);
+    Task DeleteCommentAsync(int id);
 }
