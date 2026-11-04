@@ -1,0 +1,61 @@
+@using DTOs
+@using BlazorApp.Services
+@inject IUserService UserService
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="userName" Label="Username" AutoFocus="true" />
+        <MudTextField @bind-Value="password" Label="Password" InputType="InputType.Password" />
+
+        @if (error is not null)
+        {
+            <MudText Color="Color.Error" Class="mt-3">@error</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="AddUser" Disabled="saving">Add user</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // Given to us by MudBlazor; used to close the dialog.
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private string userName = "";
+    private string password = "";
+    private string? error;
+    private bool saving;
+
+    private async Task AddUser()
+    {
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+        {
+            error = "Username and password are required.";
+            return;
+        }
+
+        try
+        {
+            saving = true;
+            error = null;
+            UserDto created = await UserService.AddUserAsync(
+                new CreateUserDto { UserName = userName, Password = password });
+
+            // Close and hand the new user back to the Users page.
+            MudDialog.Close(DialogResult.Ok(created));
+        }
+        catch (Exception e)
+        {
+            // Stay open so the user can fix it, e.g. a taken username.
+            error = e.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

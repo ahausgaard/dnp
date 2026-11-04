@@ -2,6 +2,8 @@
 @using DTOs
 @using BlazorApp.Services
 @inject IPostService PostService
+@inject ICommentService CommentService
+@inject IUserService UserService
 
 <SectionContent
     SectionName="page-title">@(post?.Title ?? "Post")</SectionContent>
@@ -22,51 +24,106 @@ else
 
     <MudText Typo="Typo.body1" Class="mt-2" Style="white-space: pre-line">@post.Body</MudText>
     <MudDivider Class="my-6"/>
-    @if (error is not null)
-    {
-        <p style="color:red">@error</p>
-    }
-    else if (post.Comments is null)
-    {
-        <p>Loading...</p>
-    }
-    else if (post.Comments.Count == 0)
-    {
-        <p>No comments yet.</p>
-    }
-    else
-    {
-        <MudText Typo="Typo.h6" Class="mb-3">Comments</MudText>
 
-        @foreach (var comment in (post.Comments ?? []).OrderBy(c => c.Id))
-        {
-            <div class="mb-4">
-                <MudText Typo="Typo.body2">@comment.Body</MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">by @comment.Author?.UserName</MudText>
-            </div>
-        }
+    <MudText Typo="Typo.h6" Class="mb-3">Comments</MudText>
+
+    @if (comments.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Class="mb-4">No comments yet.</MudText>
     }
+
+    @foreach (var comment in comments.OrderBy(c => c.Id))
+    {
+        <div class="mb-4">
+            <MudText Typo="Typo.body2">@comment.Body</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">by @comment.Author?.UserName</MudText>
+        </div>
+    }
+
+    @* New comment form *@
+    <MudStack Spacing="2" Class="mt-6" Style="max-width: 600px">
+        @* Temporary until there's a login: choose who is commenting. *@
+        <MudSelect T="int?" @bind-Value="selectedUserId" Label="Comment as">
+            @foreach (var user in users)
+            {
+                <MudSelectItem T="int?" Value="@user.Id">@user.UserName</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField @bind-Value="newCommentBody" Label="Write a comment…" Lines="3" />
+
+        @if (commentError is not null)
+        {
+            <MudText Color="Color.Error">@commentError</MudText>
+        }
+
+        <div>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="AddComment" Disabled="saving">Comment</MudButton>
+        </div>
+    </MudStack>
 }
 
 @code {
-        [Parameter] public int PostId { get; set; }
+    [Parameter] public int PostId { get; set; }
 
-        private PostDto? post;
-        private string? error;
+    private PostDto? post;
+    private List<CommentDto> comments = [];
+    private List<UserDto> users = [];
+    private string? error;
 
-        // OnParametersSetAsync (not OnInitializedAsync) so it reloads if you
-        // navigate from one post straight to another.
-        protected override async Task OnParametersSetAsync()
+    // New comment form
+    private int? selectedUserId;
+    private string newCommentBody = "";
+    private string? commentError;
+    private bool saving;
+
+    // OnParametersSetAsync (not OnInitializedAsync) so it reloads if you
+    // navigate from one post straight to another.
+    protected override async Task OnParametersSetAsync()
+    {
+        try
         {
-            try
-            {
-                error = null;
-                post = await PostService.GetPostAsync(PostId);
-            }
-            catch (Exception e)
-            {
-                error = e.Message;
-            }
+            error = null;
+            post = await PostService.GetPostAsync(PostId);
+            comments = post.Comments ?? [];
+            users = await UserService.GetUsersAsync();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+
+    private async Task AddComment()
+    {
+        if (selectedUserId is null || string.IsNullOrWhiteSpace(newCommentBody))
+        {
+            commentError = "Choose a user and write a comment.";
+            return;
         }
 
+        try
+        {
+            saving = true;
+            commentError = null;
+            CommentDto created = await CommentService.AddCommentAsync(new CreateCommentDto
+            {
+                Body = newCommentBody,
+                UserId = selectedUserId.Value,
+                PostId = PostId
+            });
+
+            comments.Add(created);
+            newCommentBody = "";
+        }
+        catch (Exception e)
+        {
+            commentError = e.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
     }
+}

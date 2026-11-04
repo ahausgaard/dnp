@@ -1,18 +1,20 @@
 @page "/Users"
 @using DTOs
 @using BlazorApp.Services
+@using BlazorApp.Components.Dialogs
 @inject IUserService UserService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 <SectionContent SectionName="page-title">Users</SectionContent>
 
+<MudButton Variant="Variant.Filled" Color="Color.Primary"
+           StartIcon="@Icons.Material.Filled.PersonAdd"
+           OnClick="OpenAddUserDialog" Class="mb-4">Add user</MudButton>
 
 @if (error is not null)
 {
     <p style="color:red">@error</p>
 }
-<MudText>Create User</MudText>
-
-
-
 else if (users is null)
 {
     <p>Loading...</p>
@@ -47,5 +49,16 @@ else
             error = e.Message;
         }
     }
-}
+
+    private async Task OpenAddUserDialog()
+    {
+        var dialog = await DialogService.ShowAsync<AddUserDialog>("Add user");
+        DialogResult? result = await dialog.Result;
+        
+        if (result is not { Canceled: false, Data: UserDto newUser })
+            return;
+
+        users?.Add(newUser);
+        Snackbar.Add($"User {newUser.UserName} created", Severity.Success);
+    }
 }
