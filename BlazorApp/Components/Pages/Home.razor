@@ -10,9 +10,13 @@
 
 <SectionContent SectionName="page-title">Home</SectionContent>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary"
-           StartIcon="@Icons.Material.Filled.Message"
-           OnClick="OpenCreatePostDialog" Class="mb-4">Add post</MudButton>
+<AuthorizeView>
+    <Authorized>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Message"
+                   OnClick="OpenCreatePostDialog" Class="mb-4">Add post</MudButton>
+    </Authorized>
+</AuthorizeView>
 
 @if (error is not null)
 {

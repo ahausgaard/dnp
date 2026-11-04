@@ -1,5 +1,7 @@
+using BlazorApp.Auth;
 using BlazorApp.Components;
 using BlazorApp.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +17,15 @@ var apiAddress = new Uri("https+http://webapi");
 builder.Services.AddHttpClient<IPostService, HttpPostService>(c => c.BaseAddress = apiAddress);
 builder.Services.AddHttpClient<ICommentService, HttpCommentService>(c => c.BaseAddress = apiAddress);
 builder.Services.AddHttpClient<IUserService, HttpUserService>(c => c.BaseAddress = apiAddress);
+
+// Authentication: one SimpleAuthProvider per user circuit, shared by the login
+// dialog (which calls Login) and Blazor (which asks it who is logged in).
+builder.Services.AddHttpClient("webapi", c => c.BaseAddress = apiAddress);
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped(sp => new SimpleAuthProvider(
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient("webapi")));
+builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
+    sp.GetRequiredService<SimpleAuthProvider>());
 
 builder.Services.AddMudServices();
 

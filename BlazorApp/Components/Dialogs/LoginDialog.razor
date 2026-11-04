@@ -1,0 +1,59 @@
+@using BlazorApp.Auth
+@inject SimpleAuthProvider AuthProvider
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="userName" Label="Username" AutoFocus="true" />
+        <MudTextField @bind-Value="password" Label="Password" InputType="InputType.Password" />
+
+        @if (error is not null)
+        {
+            <MudText Color="Color.Error" Class="mt-3">@error</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="Login" Disabled="loggingIn">Log in</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // Given to us by MudBlazor; used to close the dialog.
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private string userName = "";
+    private string password = "";
+    private string? error;
+    private bool loggingIn;
+
+    private async Task Login()
+    {
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+        {
+            error = "Username and password are required.";
+            return;
+        }
+
+        try
+        {
+            loggingIn = true;
+            error = null;
+            await AuthProvider.Login(userName, password);
+
+            // The provider has told Blazor about the new user, so we just close.
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception e)
+        {
+            // Stay open so the user can try again, e.g. a wrong password.
+            error = e.Message;
+        }
+        finally
+        {
+            loggingIn = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,4 +1,8 @@
 ﻿@inherits LayoutComponentBase
+@using BlazorApp.Components.Dialogs
+@using BlazorApp.Auth
+@inject IDialogService DialogService
+@inject SimpleAuthProvider AuthProvider
 <MudThemeProvider/>
 <MudPopoverProvider/>
 @* All dialogs: up to 600px wide (MaxWidth.Small), filling that width instead of shrinking to their content. *@
@@ -8,6 +12,21 @@
 <MudLayout>
     <MudAppBar>
         <SectionOutlet SectionName="page-title"/>
+        <MudSpacer/>
+        <AuthorizeView>
+            <Authorized>
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2"/>
+                <MudText>@context.User.Identity?.Name</MudText>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit"
+                           StartIcon="@Icons.Material.Filled.Logout"
+                           OnClick="AuthProvider.Logout" Class="ml-4">Log out</MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit"
+                           StartIcon="@Icons.Material.Filled.Login"
+                           OnClick="OpenLoginDialog">Log in</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
     </MudAppBar>
     <MudDrawer Color="Color.Secondary" Open="true" Fixed="true" Elevation="1">
         <MudDrawerHeader>
@@ -39,3 +58,10 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private async Task OpenLoginDialog()
+    {
+        await DialogService.ShowAsync<LoginDialog>("Log in");
+    }
+}
