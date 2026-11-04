@@ -1,17 +1,12 @@
 @using DTOs
 @using BlazorApp.Services
+@using System.Security.Claims
 @inject ICommentService CommentService
-@inject IUserService UserService
+@inject AuthenticationStateProvider AuthProvider
 
 <MudDialog>
     <DialogContent>
-        @* Temporary until there's a login: choose who is commenting. *@
-        <MudSelect T="int?" @bind-Value="selectedUserId" Label="Comment as">
-            @foreach (var user in users)
-            {
-                <MudSelectItem T="int?" Value="@user.Id">@user.UserName</MudSelectItem>
-            }
-        </MudSelect>
+        <MudText Typo="Typo.body2" Class="mb-2">Commenting as <b>@userName</b></MudText>
         <MudTextField @bind-Value="body" Label="Write a comment…" Lines="4" AutoFocus="true" />
 
         @if (error is not null)
@@ -33,29 +28,32 @@
     // The post being commented on; passed in by PostDetails when it opens the dialog.
     [Parameter] public int PostId { get; set; }
 
-    private List<UserDto> users = [];
-    private int? selectedUserId;
+    private int? userId;
+    private string? userName;
     private string body = "";
     private string? error;
     private bool saving;
 
     protected override async Task OnInitializedAsync()
     {
-        try
+        // The dialog is only reachable when logged in, so read who that is.
+        AuthenticationState state = await AuthProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal user = state.User;
+        if (user.Identity is null || !user.Identity.IsAuthenticated)
         {
-            users = await UserService.GetUsersAsync();
+            error = "You must be logged in.";
+            return;
         }
-        catch (Exception e)
-        {
-            error = e.Message;
-        }
+
+        userName = user.Identity.Name;
+        userId = int.Parse(user.Claims.Single(c => c.Type == "Id").Value);
     }
 
     private async Task CreateComment()
     {
-        if (selectedUserId is null || string.IsNullOrWhiteSpace(body))
+        if (userId is null || string.IsNullOrWhiteSpace(body))
         {
-            error = "Choose a user and write a comment.";
+            error = "Write a comment.";
             return;
         }
 
@@ -64,7 +62,7 @@
             saving = true;
             error = null;
             CommentDto created = await CommentService.AddCommentAsync(
-                new CreateCommentDto { Body = body, UserId = selectedUserId.Value, PostId = PostId });
+                new CreateCommentDto { Body = body, UserId = userId.Value, PostId = PostId });
 
             // Close and hand the new comment back to the PostDetails page.
             MudDialog.Close(DialogResult.Ok(created));
