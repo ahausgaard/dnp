@@ -22,9 +22,11 @@ public class HttpCommentService(HttpClient client) : ICommentService
         return (await response.Content.ReadFromJsonAsync<CommentDto>())!;
     }
 
-    public async Task<List<CommentDto>> GetCommentsAsync()
+    public async Task<List<CommentDto>> GetCommentsAsync(int? userId = null)
     {
-        var response = await client.GetAsync("comments");
+        // Without a userId: all comments. With one: only that user's comments.
+        string url = userId is null ? "comments" : $"comments?userId={userId}";
+        var response = await client.GetAsync(url);
         if(!response.IsSuccessStatusCode)
             throw new Exception(await response.Content.ReadAsStringAsync());
 

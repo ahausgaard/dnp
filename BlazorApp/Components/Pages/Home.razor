@@ -1,11 +1,18 @@
 @page "/"
 @using DTOs
 @using BlazorApp.Services
+@using BlazorApp.Components.Dialogs
 @inject IPostService PostService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
-<PageTitle>Bludit</PageTitle>
+<PageTitle>Violit</PageTitle>
 
 <SectionContent SectionName="page-title">Home</SectionContent>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary"
+           StartIcon="@Icons.Material.Filled.Message"
+           OnClick="OpenCreatePostDialog" Class="mb-4">Add post</MudButton>
 
 @if (error is not null)
 {
@@ -46,5 +53,18 @@ else
         {
             error = e.Message;
         }
+    }
+    
+    private async Task OpenCreatePostDialog()
+    {
+        var dialog = await DialogService.ShowAsync<CreatePostDialog>("Create post");
+        DialogResult? result = await dialog.Result;
+        
+        // Cancelled, or closed without a post: nothing to do.
+        if (result is not { Canceled: false, Data: PostDto newPost })
+            return;
+
+        posts?.Add(newPost);
+        Snackbar.Add($"Post \"{newPost.Title}\" created", Severity.Success);
     }
 }

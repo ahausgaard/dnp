@@ -2,7 +2,7 @@
 @using DTOs
 @using BlazorApp.Services
 @inject IPostService PostService
-
+@inject ICommentService CommentService
 @inject IUserService UserService
 
 <SectionContent SectionName="page-title">@(user?.UserName ?? "User")</SectionContent>
@@ -11,28 +11,50 @@
 {
     <p style="color:red">@error</p>
 }
-else if (posts is null)
+else if (posts is null || comments is null)
 {
     <p>Loading...</p>
 }
-else if (posts.Count == 0)
-{
-    <p>No posts yet.</p>
-}
 else
 {
-    <MudText>Posts:</MudText>
-    <MudStack Spacing="6">
-        @foreach (var post in posts)
-        {
-            <div>
-                <MudText><a href="Posts/@post.Id">@post.Title</a></MudText>
-                <small><a href="Users/@post.Author?.Id">by @post.Author?.UserName</a></small>
-            </div>
-        }
-    </MudStack>
-}
+    <MudText Typo="Typo.h6" Class="mb-3">Posts</MudText>
 
+    @if (posts.Count == 0)
+    {
+        <MudText Typo="Typo.body2">No posts yet.</MudText>
+    }
+    else
+    {
+        <MudStack Spacing="6">
+            @foreach (var post in posts)
+            {
+                <div>
+                    <MudText><a href="Posts/@post.Id">@post.Title</a></MudText>
+                    <small><a href="Users/@post.Author?.Id">by @post.Author?.UserName</a></small>
+                </div>
+            }
+        </MudStack>
+    }
+
+    <MudDivider Class="my-6"/>
+
+    <MudText Typo="Typo.h6" Class="mb-3">Comments</MudText>
+
+    @if (comments.Count == 0)
+    {
+        <MudText Typo="Typo.body2">No comments yet.</MudText>
+    }
+
+    @foreach (var comment in comments.OrderBy(c => c.Id))
+    {
+        <div class="mb-4">
+            <MudText Typo="Typo.body2">"@comment.Body"</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                on <a href="Posts/@comment.PostId">@postTitles.GetValueOrDefault(comment.PostId, "a deleted post")</a>
+            </MudText>
+        </div>
+    }
+}
 
 @code {
     // Filled from {UserId} in the address, e.g. /Users/2 → 2.
@@ -40,7 +62,12 @@ else
     private UserDto? user;
     private string? error;
     private List<PostDto>? posts;
-    
+    private List<CommentDto>? comments;
+
+    // Post id → title, so each comment can show which post it's on.
+    // Built from all posts, since a user can comment on other people's posts.
+    private Dictionary<int, string> postTitles = [];
+
     protected override async Task OnParametersSetAsync()
     {
         try
@@ -48,6 +75,10 @@ else
             error = null;
             user = await UserService.GetUserAsync(UserId);
             posts = await PostService.GetPostsAsync(UserId);
+            comments = await CommentService.GetCommentsAsync(UserId);
+
+            List<PostDto> allPosts = await PostService.GetPostsAsync();
+            postTitles = allPosts.ToDictionary(p => p.Id, p => p.Title);
         }
         catch (Exception e)
         {

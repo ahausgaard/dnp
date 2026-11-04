@@ -1,9 +1,10 @@
 @page "/Posts/{PostId:int}"
 @using DTOs
 @using BlazorApp.Services
+@using BlazorApp.Components.Dialogs
 @inject IPostService PostService
-@inject ICommentService CommentService
-@inject IUserService UserService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <SectionContent
     SectionName="page-title">@(post?.Title ?? "Post")</SectionContent>
@@ -40,28 +41,9 @@ else
         </div>
     }
 
-    @* New comment form *@
-    <MudStack Spacing="2" Class="mt-6" Style="max-width: 600px">
-        @* Temporary until there's a login: choose who is commenting. *@
-        <MudSelect T="int?" @bind-Value="selectedUserId" Label="Comment as">
-            @foreach (var user in users)
-            {
-                <MudSelectItem T="int?" Value="@user.Id">@user.UserName</MudSelectItem>
-            }
-        </MudSelect>
-
-        <MudTextField @bind-Value="newCommentBody" Label="Write a comment…" Lines="3" />
-
-        @if (commentError is not null)
-        {
-            <MudText Color="Color.Error">@commentError</MudText>
-        }
-
-        <div>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="AddComment" Disabled="saving">Comment</MudButton>
-        </div>
-    </MudStack>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.AddComment"
+               OnClick="OpenCreateCommentDialog" Class="mt-2">Add comment</MudButton>
 }
 
 @code {
@@ -69,14 +51,7 @@ else
 
     private PostDto? post;
     private List<CommentDto> comments = [];
-    private List<UserDto> users = [];
     private string? error;
-
-    // New comment form
-    private int? selectedUserId;
-    private string newCommentBody = "";
-    private string? commentError;
-    private bool saving;
 
     // OnParametersSetAsync (not OnInitializedAsync) so it reloads if you
     // navigate from one post straight to another.
@@ -87,7 +62,6 @@ else
             error = null;
             post = await PostService.GetPostAsync(PostId);
             comments = post.Comments ?? [];
-            users = await UserService.GetUsersAsync();
         }
         catch (Exception e)
         {
@@ -95,35 +69,21 @@ else
         }
     }
 
-    private async Task AddComment()
+    private async Task OpenCreateCommentDialog()
     {
-        if (selectedUserId is null || string.IsNullOrWhiteSpace(newCommentBody))
+        // Tell the dialog which post the comment belongs to.
+        var parameters = new DialogParameters<CreateCommentDialog>
         {
-            commentError = "Choose a user and write a comment.";
+            { d => d.PostId, PostId }
+        };
+        var dialog = await DialogService.ShowAsync<CreateCommentDialog>("Add comment", parameters);
+        DialogResult? result = await dialog.Result;
+
+        // Cancelled, or closed without a comment: nothing to do.
+        if (result is not { Canceled: false, Data: CommentDto newComment })
             return;
-        }
 
-        try
-        {
-            saving = true;
-            commentError = null;
-            CommentDto created = await CommentService.AddCommentAsync(new CreateCommentDto
-            {
-                Body = newCommentBody,
-                UserId = selectedUserId.Value,
-                PostId = PostId
-            });
-
-            comments.Add(created);
-            newCommentBody = "";
-        }
-        catch (Exception e)
-        {
-            commentError = e.Message;
-        }
-        finally
-        {
-            saving = false;
-        }
+        comments.Add(newComment);
+        Snackbar.Add("Comment added", Severity.Success);
     }
 }

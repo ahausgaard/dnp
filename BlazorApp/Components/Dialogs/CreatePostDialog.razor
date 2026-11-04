@@ -1,0 +1,83 @@
+@using DTOs
+@using BlazorApp.Services
+@inject IPostService PostService
+@inject IUserService UserService
+
+<MudDialog>
+    <DialogContent>
+        @* Temporary until there's a login: choose who is posting. *@
+        <MudSelect T="int?" @bind-Value="selectedUserId" Label="Post as">
+            @foreach (var user in users)
+            {
+                <MudSelectItem T="int?" Value="@user.Id">@user.UserName</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="title" Label="Title" AutoFocus="true" />
+        <MudTextField @bind-Value="body" Label="Body" Lines="6" />
+
+        @if (error is not null)
+        {
+            <MudText Color="Color.Error" Class="mt-3">@error</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="CreatePost" Disabled="saving">Create post</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // Given to us by MudBlazor; used to close the dialog.
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private List<UserDto> users = [];
+    private int? selectedUserId;
+    private string title = "";
+    private string body = "";
+    private string? error;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = await UserService.GetUsersAsync();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+
+    private async Task CreatePost()
+    {
+        if (selectedUserId is null || string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(body))
+        {
+            error = "Choose a user and fill in both title and body.";
+            return;
+        }
+
+        try
+        {
+            saving = true;
+            error = null;
+            PostDto created = await PostService.AddPostAsync(
+                new CreatePostDto { Title = title, Body = body, UserId = selectedUserId.Value });
+
+            // Close and hand the new post back to the Home page.
+            MudDialog.Close(DialogResult.Ok(created));
+        }
+        catch (Exception e)
+        {
+            // Stay open so the user can fix it.
+            error = e.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

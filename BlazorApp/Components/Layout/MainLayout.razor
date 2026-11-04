@@ -1,7 +1,8 @@
 ﻿@inherits LayoutComponentBase
 <MudThemeProvider/>
 <MudPopoverProvider/>
-<MudDialogProvider/>
+@* All dialogs: up to 600px wide (MaxWidth.Small), filling that width instead of shrinking to their content. *@
+<MudDialogProvider MaxWidth="MaxWidth.Small" FullWidth="true"/>
 <MudSnackbarProvider/>
 
 <MudLayout>
