@@ -2,13 +2,17 @@
 @using DTOs
 @using BlazorApp.Services
 @inject IUserService UserService
-<SectionContent SectionName="page-title">All users</SectionContent>
+<SectionContent SectionName="page-title">Users</SectionContent>
 
 
 @if (error is not null)
 {
     <p style="color:red">@error</p>
 }
+<MudText>Create User</MudText>
+
+
+
 else if (users is null)
 {
     <p>Loading...</p>
@@ -18,7 +22,8 @@ else if (users.Count == 0)
     <p>No users yet.</p>
 }
 else
-{
+{   
+    <MudText>Users</MudText>
     @foreach (var user in users)
     {
         <div>
@@ -42,5 +47,5 @@ else
             error = e.Message;
         }
     }
-
+}
 }

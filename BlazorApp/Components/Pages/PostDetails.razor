@@ -3,7 +3,8 @@
 @using BlazorApp.Services
 @inject IPostService PostService
 
-<SectionContent SectionName="page-title">@(post?.Title ?? "Post")</SectionContent>
+<SectionContent
+    SectionName="page-title">@(post?.Title ?? "Post")</SectionContent>
 
 @if (error is not null)
 {
@@ -15,38 +16,57 @@ else if (post is null)
 }
 else
 {
-    <small><i><a href="Users/@post.Author?.Id"> @post.Author?.UserName wrote:</a></i></small>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+        <i><a href="Users/@post.Author?.Id">@post.Author?.UserName</a> wrote:</i>
+    </MudText>
 
-    <MudText Class="mt-4" Style="white-space: pre-line">@post.Body</MudText>
-    <MudDivider Class="my-6" />
-    @foreach (var comment in (post.Comments ?? []).OrderBy(c => c.Id))
+    <MudText Typo="Typo.body1" Class="mt-2" Style="white-space: pre-line">@post.Body</MudText>
+    <MudDivider Class="my-6"/>
+    @if (error is not null)
     {
-        <div class="mb-4">
-            <MudText>@comment.Body</MudText>
-            <small>by @comment.Author?.UserName</small>
-        </div>
+        <p style="color:red">@error</p>
     }
-    
+    else if (post.Comments is null)
+    {
+        <p>Loading...</p>
+    }
+    else if (post.Comments.Count == 0)
+    {
+        <p>No comments yet.</p>
+    }
+    else
+    {
+        <MudText Typo="Typo.h6" Class="mb-3">Comments</MudText>
+
+        @foreach (var comment in (post.Comments ?? []).OrderBy(c => c.Id))
+        {
+            <div class="mb-4">
+                <MudText Typo="Typo.body2">@comment.Body</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">by @comment.Author?.UserName</MudText>
+            </div>
+        }
+    }
 }
 
 @code {
-    [Parameter] public int PostId { get; set; }
+        [Parameter] public int PostId { get; set; }
 
-    private PostDto? post;
-    private string? error;
+        private PostDto? post;
+        private string? error;
 
-    // OnParametersSetAsync (not OnInitializedAsync) so it reloads if you
-    // navigate from one post straight to another.
-    protected override async Task OnParametersSetAsync()
-    {
-        try
+        // OnParametersSetAsync (not OnInitializedAsync) so it reloads if you
+        // navigate from one post straight to another.
+        protected override async Task OnParametersSetAsync()
         {
-            error = null;
-            post = await PostService.GetPostAsync(PostId);
+            try
+            {
+                error = null;
+                post = await PostService.GetPostAsync(PostId);
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
         }
-        catch (Exception e)
-        {
-            error = e.Message;
-        }
+
     }
-}
