@@ -17,7 +17,7 @@
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                   OnClick="AddUser" Disabled="saving">Create user</MudButton>
+                   OnClick="CreateUser" Disabled="saving">Create user</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -30,7 +30,7 @@
     private string? error;
     private bool saving;
 
-    private async Task AddUser()
+    private async Task CreateUser()
     {
         if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
         {

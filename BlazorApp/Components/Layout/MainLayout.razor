@@ -71,10 +71,10 @@
 
     private async Task OpenCreateUserDialog()
     {
-        var dialog = await DialogService.ShowAsync<AddUserDialog>("Create user");
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Create user");
         DialogResult? result = await dialog.Result;
 
-        if (result is not { Canceled: false, Data: AddUserDialog.CreateUserResult created })
+        if (result is not { Canceled: false, Data: CreateUserDialog.CreateUserResult created })
             return;
 
         if (created.LoggedIn)
