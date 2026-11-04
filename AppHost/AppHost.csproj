@@ -10,6 +10,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
     <UserSecretsId>05822359-f041-4fdc-9414-3f7e869d64a1</UserSecretsId>
   </PropertyGroup>
 
