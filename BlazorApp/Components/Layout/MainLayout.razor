@@ -3,6 +3,7 @@
 @using BlazorApp.Auth
 @inject IDialogService DialogService
 @inject SimpleAuthProvider AuthProvider
+@inject ISnackbar Snackbar
 <MudThemeProvider/>
 <MudPopoverProvider/>
 @* All dialogs: up to 600px wide (MaxWidth.Small), filling that width instead of shrinking to their content. *@
@@ -22,6 +23,9 @@
                            OnClick="AuthProvider.Logout" Class="ml-4">Log out</MudButton>
             </Authorized>
             <NotAuthorized>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="OpenCreateUserDialog" Class="mr-2">Create user</MudButton>
                 <MudButton Variant="Variant.Text" Color="Color.Inherit"
                            StartIcon="@Icons.Material.Filled.Login"
                            OnClick="OpenLoginDialog">Log in</MudButton>
@@ -63,5 +67,19 @@
     private async Task OpenLoginDialog()
     {
         await DialogService.ShowAsync<LoginDialog>("Log in");
+    }
+
+    private async Task OpenCreateUserDialog()
+    {
+        var dialog = await DialogService.ShowAsync<AddUserDialog>("Create user");
+        DialogResult? result = await dialog.Result;
+
+        if (result is not { Canceled: false, Data: AddUserDialog.CreateUserResult created })
+            return;
+
+        if (created.LoggedIn)
+            Snackbar.Add($"User {created.User.UserName} created, you're now logged in", Severity.Success);
+        else
+            Snackbar.Add($"User {created.User.UserName} created, but logging in failed. Try Log in.", Severity.Warning);
     }
 }

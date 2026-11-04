@@ -1,6 +1,8 @@
 @using DTOs
 @using BlazorApp.Services
+@using BlazorApp.Auth
 @inject IUserService UserService
+@inject SimpleAuthProvider AuthProvider
 
 <MudDialog>
     <DialogContent>
@@ -15,7 +17,7 @@
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                   OnClick="AddUser" Disabled="saving">Add user</MudButton>
+                   OnClick="AddUser" Disabled="saving">Create user</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -43,8 +45,19 @@
             UserDto created = await UserService.AddUserAsync(
                 new CreateUserDto { UserName = userName, Password = password });
 
-            // Close and hand the new user back to the Users page.
-            MudDialog.Close(DialogResult.Ok(created));
+            // The user exists now, so log straight in as them.
+            bool loggedIn = true;
+            try
+            {
+                await AuthProvider.Login(userName, password);
+            }
+            catch
+            {
+                // Don't stay open: retrying would fail with "username taken".
+                loggedIn = false;
+            }
+
+            MudDialog.Close(DialogResult.Ok(new CreateUserResult(created, loggedIn)));
         }
         catch (Exception e)
         {
@@ -58,4 +71,6 @@
     }
 
     private void Cancel() => MudDialog.Cancel();
+
+    public record CreateUserResult(UserDto User, bool LoggedIn);
 }
