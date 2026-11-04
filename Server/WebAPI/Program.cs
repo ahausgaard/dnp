@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 builder.Services.AddControllers();
 
@@ -19,6 +20,7 @@ builder.Services.AddScoped<ICommentRepository, CommentFileRepository>();
 
 var app = builder.Build();
 
+app.MapDefaultEndpoints();
 app.MapControllers();
 
 if (app.Environment.IsDevelopment())

@@ -5,18 +5,18 @@ using MudBlazor.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.AddServiceDefaults();
+
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-builder.Services.AddScoped<IPostService, HttpPostService>();
-builder.Services.AddScoped<ICommentService, HttpCommentService>();
-builder.Services.AddScoped<IUserService, HttpUserService>();
+
+// "webapi" is resolved by service discovery: Aspire supplies the address when run
+// through the AppHost; otherwise it comes from "Services:webapi" in appsettings.json.
+var apiAddress = new Uri("https+http://webapi");
+builder.Services.AddHttpClient<IPostService, HttpPostService>(c => c.BaseAddress = apiAddress);
+builder.Services.AddHttpClient<ICommentService, HttpCommentService>(c => c.BaseAddress = apiAddress);
+builder.Services.AddHttpClient<IUserService, HttpUserService>(c => c.BaseAddress = apiAddress);
 
 builder.Services.AddMudServices();
-
-builder.Services.AddScoped(sp => new HttpClient
-    {
-        BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!)
-    }
-);
 
 var app = builder.Build();
 
@@ -35,6 +35,7 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapDefaultEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

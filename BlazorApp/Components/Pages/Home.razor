@@ -1,8 +1,50 @@
-﻿@page "/"
+@page "/"
+@using DTOs
+@using BlazorApp.Services
+@inject IPostService PostService
 
 <PageTitle>Bludit</PageTitle>
 
-<h1>Home</h1>
-    
-<p><a href="Posts">View all posts</a></p>
+<SectionContent SectionName="page-title">Home</SectionContent>
 
+@if (error is not null)
+{
+    <p style="color:red">@error</p>
+}
+else if (posts is null)
+{
+    <p>Loading...</p>
+}
+else if (posts.Count == 0)
+{
+    <p>No posts yet.</p>
+}
+else
+{
+    <MudStack Spacing="6">
+        @foreach (var post in posts)
+        {
+            <div>
+                <MudText Typo="Typo.h3"><a href="Posts/@post.Id">@post.Title</a></MudText>
+                <small><a href="Users/@post.Author?.Id">by @post.Author?.UserName</a></small>
+            </div>
+        }
+    </MudStack>
+}
+
+@code {
+    private List<PostDto>? posts;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            posts = await PostService.GetPostsAsync();
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+}

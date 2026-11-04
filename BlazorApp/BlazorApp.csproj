@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DTOs\DTOs.csproj" />
+      <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
     </ItemGroup>
 
     <ItemGroup>
