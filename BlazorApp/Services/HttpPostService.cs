@@ -17,16 +17,18 @@ public class HttpPostService(HttpClient client) : IPostService
 
     public async Task<PostDto> GetPostAsync(int id)
     {
-        var response = await client.GetAsync($"posts/{id}");
+        var response = await client.GetAsync($"posts/{id}?includeComments=true");
         if(!response.IsSuccessStatusCode)
             throw new Exception(await response.Content.ReadAsStringAsync());
 
         return (await response.Content.ReadFromJsonAsync<PostDto>())!;
     }
 
-    public async Task<List<PostDto>> GetPostsAsync()
+    public async Task<List<PostDto>> GetPostsAsync(int? userId = null)
     {
-        var response = await client.GetAsync("posts");
+        // Without a userId: all posts. With one: only that user's posts.
+        string url = userId is null ? "posts" : $"posts?userId={userId}";
+        var response = await client.GetAsync(url);
         if (!response.IsSuccessStatusCode)
             throw new Exception(await response.Content.ReadAsStringAsync());
 

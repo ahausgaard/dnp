@@ -4,7 +4,6 @@
 @inject IUserService UserService
 <SectionContent SectionName="page-title">All users</SectionContent>
 
-<h3>Users</h3>
 
 @if (error is not null)
 {
@@ -23,7 +22,7 @@ else
     @foreach (var user in users)
     {
         <div>
-            <h4><a href="Users/@user.Id">@user.UserName</a></h4>
+        <MudText><a href="Users/@user.Id">@user.Id | @user.UserName</a></MudText>
         </div>
     }
 }

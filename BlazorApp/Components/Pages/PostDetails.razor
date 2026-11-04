@@ -1,0 +1,52 @@
+@page "/Posts/{PostId:int}"
+@using DTOs
+@using BlazorApp.Services
+@inject IPostService PostService
+
+<SectionContent SectionName="page-title">@(post?.Title ?? "Post")</SectionContent>
+
+@if (error is not null)
+{
+    <p style="color:red">@error</p>
+}
+else if (post is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <small><i><a href="Users/@post.Author?.Id"> @post.Author?.UserName wrote:</a></i></small>
+
+    <MudText Class="mt-4" Style="white-space: pre-line">@post.Body</MudText>
+    <MudDivider Class="my-6" />
+    @foreach (var comment in (post.Comments ?? []).OrderBy(c => c.Id))
+    {
+        <div class="mb-4">
+            <MudText>@comment.Body</MudText>
+            <small>by @comment.Author?.UserName</small>
+        </div>
+    }
+    
+}
+
+@code {
+    [Parameter] public int PostId { get; set; }
+
+    private PostDto? post;
+    private string? error;
+
+    // OnParametersSetAsync (not OnInitializedAsync) so it reloads if you
+    // navigate from one post straight to another.
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            error = null;
+            post = await PostService.GetPostAsync(PostId);
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+    }
+}

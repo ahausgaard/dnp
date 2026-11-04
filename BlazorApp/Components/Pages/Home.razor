@@ -25,7 +25,7 @@ else
         @foreach (var post in posts)
         {
             <div>
-                <MudText Typo="Typo.h3"><a href="Posts/@post.Id">@post.Title</a></MudText>
+                <MudText><a href="Posts/@post.Id">@post.Title</a></MudText>
                 <small><a href="Users/@post.Author?.Id">by @post.Author?.UserName</a></small>
             </div>
         }
