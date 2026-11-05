@@ -27,10 +27,11 @@ public class CommentsController : ControllerBase
         [FromBody] CreateCommentDto request)
     {
         User author;
+        Post post;
         try
         {
             author = await userRepo.GetSingleAsync(request.UserId);
-            await postRepo.GetSingleAsync(request.PostId);
+            post = await postRepo.GetSingleAsync(request.PostId);
         }
         catch (InvalidOperationException e)
         {
@@ -40,8 +41,8 @@ public class CommentsController : ControllerBase
         Comment comment = new()
         {
             Body = request.Body,
-            UserId = request.UserId,
-            PostId = request.PostId
+            User = author,
+            Post = post
         };
         
         Comment created = await commentRepo.AddAsync(comment);
@@ -57,7 +58,7 @@ public class CommentsController : ControllerBase
         try
         {
             Comment comment = await commentRepo.GetSingleAsync(id);
-            User? author = userRepo.GetMany().SingleOrDefault(u => u.Id == comment.UserId);
+            User author = await userRepo.GetSingleAsync(comment.User.Id);
             
             return Ok(comment.ToDto(author));
         }
@@ -72,26 +73,25 @@ public class CommentsController : ControllerBase
         [FromQuery] int? userId, [FromQuery] string? userName, [FromQuery] int? postId)
     {
         IQueryable<Comment> comments = commentRepo.GetMany();
-        Dictionary<int, User> usersById =
-            userRepo.GetMany().ToDictionary(u => u.Id);
         
         if (userId is null && userName is not null)
         {
-            User? user = usersById.Values.SingleOrDefault(u => u.UserName == userName);
+            User? user = userRepo.GetMany()
+                .SingleOrDefault(u => u.UserName == userName);
             if (user is null)
                 return NotFound($"User {userName} not found");
             userId = user.Id;
         }
         
         if (userId is not null)
-            comments = comments.Where(c => c.UserId == userId);
+            comments = comments.Where(c => c.User.Id == userId);
         
         if (postId is not null)
-            comments = comments.Where(c => c.PostId == postId);
+            comments = comments.Where(c => c.Post.Id == postId);
 
         List<CommentDto> dtos = comments
             .ToList()
-            .Select(c => c.ToDto(usersById.GetValueOrDefault(c.UserId)))
+            .Select(c => c.ToDto(c.User))
             .ToList();
         
         return Ok(dtos);

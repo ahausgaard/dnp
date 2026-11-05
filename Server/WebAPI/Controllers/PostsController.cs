@@ -40,7 +40,7 @@ public class PostsController : ControllerBase
         {
             Title = request.Title,
             Body = request.Body,
-            UserId = request.UserId
+            User = author
         };
 
         Post created = await postRepo.AddAsync(post);
@@ -57,19 +57,16 @@ public class PostsController : ControllerBase
         try
         {
             Post post = await postRepo.GetSingleAsync(id);
-            Dictionary<int, User> usersById =
-                userRepo.GetMany().ToDictionary(u => u.Id);
 
             List<CommentDto>? comments = includeComments
                 ? commentRepo.GetMany()
-                    .Where(c => c.PostId == id)
+                    .Where(c => c.Post.Id == id)
                     .ToList()
-                    .Select(c => c.ToDto(usersById.GetValueOrDefault(c.UserId)))
+                    .Select(c => c.ToDto(c.User))
                     .ToList()
                 : null;
 
-            PostDto dto = post.ToDto(usersById.GetValueOrDefault(post.UserId),
-                comments);
+            PostDto dto = post.ToDto(post.User, comments);
             return Ok(dto);
         }
         catch (InvalidOperationException e)
@@ -84,10 +81,7 @@ public class PostsController : ControllerBase
         [FromQuery] string? userName, [FromQuery] bool includeComments = false)
     {
         IQueryable<Post> posts = postRepo.GetMany();
-
-        Dictionary<int, User> usersById =
-            userRepo.GetMany().ToDictionary(u => u.Id);
-
+        
         if (titleContains is not null)
         {
             posts = posts.Where(x => x.Title.Contains(titleContains));
@@ -96,30 +90,28 @@ public class PostsController : ControllerBase
         if (userId is null && userName is not null)
         {
             User? user =
-                usersById.Values.SingleOrDefault(u => u.UserName == userName);
+                userRepo.GetMany().SingleOrDefault(u => u.UserName == userName);
             if (user is null)
                 return NotFound($"User {userName} not found");
             userId = user.Id;
         }
 
         if (userId is not null)
-            posts = posts.Where(x => x.UserId == userId);
+            posts = posts.Where(x => x.User.Id == userId);
 
         List<Post> postList = posts.ToList();
 
         Dictionary<int, List<CommentDto>> commentsByPost = includeComments
             ? commentRepo.GetMany()
                 .ToList()
-                .GroupBy(c => c.PostId)
+                .GroupBy(c => c.Post.Id)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Select(c =>
-                            c.ToDto(usersById.GetValueOrDefault(c.UserId)))
-                        .ToList())
+                    g => g.Select(c => c.ToDto(c.User)).ToList())
             : [];
 
         List<PostDto> dtos = postList
-            .Select(p => p.ToDto(usersById.GetValueOrDefault(p.UserId),
+            .Select(p => p.ToDto(p.User,
                 includeComments
                     ? commentsByPost.GetValueOrDefault(p.Id, [])
                     : null))

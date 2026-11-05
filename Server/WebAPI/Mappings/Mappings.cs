@@ -18,7 +18,7 @@ public static class Mappings
             Id = comment.Id, 
             Body = comment.Body, 
             Author = author?.ToDto(),
-            PostId = comment.PostId
+            PostId = comment.Post.Id
         };
 
     public static PostDto ToDto(this Post post, User? author,

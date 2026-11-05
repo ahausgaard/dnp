@@ -3,6 +3,7 @@ using RepositoryContracts;
 using Scalar.AspNetCore;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
