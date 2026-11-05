@@ -1,6 +1,7 @@
 using DTOs;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RepositoryContracts;
 using WebAPI.Mappings;
 
@@ -18,10 +19,10 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public ActionResult<UserDto> Login([FromBody] LoginRequest request)
+    public async Task<ActionResult<UserDto>> Login([FromBody] LoginRequest request)
     {
-        User? user = userRepo.GetMany()
-            .SingleOrDefault(u => u.UserName == request.UserName);
+        User? user = await userRepo.GetMany()
+            .SingleOrDefaultAsync(u => u.UserName == request.UserName);
         
         if (user is null)
             return Unauthorized("Incorrect username or password");

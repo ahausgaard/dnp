@@ -3,3 +3,6 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+# SQLite temporary files (change on every run)
+*.db-shm
+*.db-wal

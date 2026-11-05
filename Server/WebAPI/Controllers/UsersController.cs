@@ -22,7 +22,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserDto>> AddUser(
         [FromBody] CreateUserDto request)
     {
-        if (IsUserNameTaken(request.UserName))
+        if (await IsUserNameTakenAsync(request.UserName))
             return Conflict($"Username '{request.UserName}' is already taken");
 
         User user = new()
@@ -73,7 +73,7 @@ public class UsersController : ControllerBase
         {
             User user = await userRepo.GetSingleAsync(id);
             
-            if (IsUserNameTaken(request.UserName, id))
+            if (await IsUserNameTakenAsync(request.UserName, id))
                 return Conflict($"Username '{request.UserName}' is already taken");
             
             user.UserName = request.UserName;
@@ -100,8 +100,8 @@ public class UsersController : ControllerBase
         }
     }
     
-    private bool IsUserNameTaken(string userName, int? exceptUserId = null) => 
-        userRepo.GetMany().Any(u => u.UserName == userName && u.Id != exceptUserId);
+    private Task<bool> IsUserNameTakenAsync(string userName, int? exceptUserId = null) =>
+        userRepo.GetMany().AnyAsync(u => u.UserName == userName && u.Id != exceptUserId);
 
     // Translated by EF into SQL that selects only Id and UserName (never Password).
     private static IQueryable<UserDto> ProjectToDto(IQueryable<User> query) =>
