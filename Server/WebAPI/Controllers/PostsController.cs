@@ -146,7 +146,7 @@ public class PostsController : ControllerBase
                 {
                     Id = c.Id,
                     Body = c.Body,
-                    PostId = p.Id,
+                    PostId = c.Post.Id, // not p.Id: referencing the outer p here needs SQL APPLY, which SQLite lacks
                     Author = new UserDto
                         { Id = c.User.Id, UserName = c.User.UserName }
                 })
