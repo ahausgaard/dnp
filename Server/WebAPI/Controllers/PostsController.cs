@@ -1,6 +1,7 @@
 using DTOs;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RepositoryContracts;
 using WebAPI.Mappings;
 
@@ -12,14 +13,11 @@ public class PostsController : ControllerBase
 {
     private readonly IPostRepository postRepo;
     private readonly IUserRepository userRepo;
-    private readonly ICommentRepository commentRepo;
 
-    public PostsController(IPostRepository postRepo, IUserRepository userRepo,
-        ICommentRepository commentRepo)
+    public PostsController(IPostRepository postRepo, IUserRepository userRepo)
     {
         this.postRepo = postRepo;
         this.userRepo = userRepo;
-        this.commentRepo = commentRepo;
     }
 
     [HttpPost]
@@ -51,73 +49,52 @@ public class PostsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<PostDto>> GetSingle(
-        [FromRoute] int id, [FromQuery] bool includeComments = false)
+    public async Task<ActionResult<PostDto>> GetPost(
+        [FromRoute] int id,
+        [FromQuery] bool includeComments = false)
     {
-        try
-        {
-            Post post = await postRepo.GetSingleAsync(id);
+        PostDto? dto = await ProjectToDto(
+                postRepo.GetMany().Where(p => p.Id == id), includeComments)
+            .SingleOrDefaultAsync();
 
-            List<CommentDto>? comments = includeComments
-                ? commentRepo.GetMany()
-                    .Where(c => c.Post.Id == id)
-                    .ToList()
-                    .Select(c => c.ToDto(c.User))
-                    .ToList()
-                : null;
+        if (dto is null)
+            return NotFound($"Post with id {id} not found");
 
-            PostDto dto = post.ToDto(post.User, comments);
-            return Ok(dto);
-        }
-        catch (InvalidOperationException e)
-        {
-            return NotFound(e.Message);
-        }
+        if (!includeComments)
+            dto.Comments = null;
+
+        return Ok(dto);
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<PostDto>> GetAllPosts(
+    public async Task<ActionResult<IEnumerable<PostDto>>> GetPosts(
         [FromQuery] string? titleContains, [FromQuery] int? userId,
         [FromQuery] string? userName, [FromQuery] bool includeComments = false)
     {
-        IQueryable<Post> posts = postRepo.GetMany();
-        
-        if (titleContains is not null)
-        {
-            posts = posts.Where(x => x.Title.Contains(titleContains));
-        }
+        IQueryable<Post> query = postRepo.GetMany();
 
-        if (userId is null && userName is not null)
-        {
-            User? user =
-                userRepo.GetMany().SingleOrDefault(u => u.UserName == userName);
-            if (user is null)
-                return NotFound($"User {userName} not found");
-            userId = user.Id;
-        }
+        if (titleContains is not null)
+            query = query.Where(p =>
+                p.Title.ToLower().Contains(titleContains.ToLower()));
 
         if (userId is not null)
-            posts = posts.Where(x => x.User.Id == userId);
+        {
+            query = query.Where(p => p.User.Id == userId);
+        }
+        else if (userName is not null)
+        {
+            if (!await userRepo.GetMany().AnyAsync(u => u.UserName == userName))
+                return NotFound($"User {userName} not found");
+            query = query.Where(p => p.User.UserName == userName);
+        }
 
-        List<Post> postList = posts.ToList();
+        List<PostDto> posts =
+            await ProjectToDto(query, includeComments).ToListAsync();
 
-        Dictionary<int, List<CommentDto>> commentsByPost = includeComments
-            ? commentRepo.GetMany()
-                .ToList()
-                .GroupBy(c => c.Post.Id)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(c => c.ToDto(c.User)).ToList())
-            : [];
+        if (!includeComments)
+            posts.ForEach(p => p.Comments = null);
 
-        List<PostDto> dtos = postList
-            .Select(p => p.ToDto(p.User,
-                includeComments
-                    ? commentsByPost.GetValueOrDefault(p.Id, [])
-                    : null))
-            .ToList();
-
-        return Ok(dtos);
+        return Ok(posts);
     }
 
     [HttpPut("{id:int}")]
@@ -139,7 +116,7 @@ public class PostsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteSingle([FromRoute] int id)
+    public async Task<ActionResult> DeletePost([FromRoute] int id)
     {
         try
         {
@@ -151,4 +128,28 @@ public class PostsController : ControllerBase
             return NotFound(e.Message);
         }
     }
+
+    // Translated by EF into a single SQL query (joins Users and Comments).
+    // The Where(c => includeComments) trick skips the comment rows when not
+    // requested; callers set Comments to null afterwards so it's omitted.
+    private static IQueryable<PostDto> ProjectToDto(IQueryable<Post> query,
+        bool includeComments) =>
+        query.Select(p => new PostDto
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Body = p.Body,
+            Author = new UserDto { Id = p.User.Id, UserName = p.User.UserName },
+            Comments = p.Comments
+                .Where(c => includeComments)
+                .Select(c => new CommentDto
+                {
+                    Id = c.Id,
+                    Body = c.Body,
+                    PostId = p.Id,
+                    Author = new UserDto
+                        { Id = c.User.Id, UserName = c.User.UserName }
+                })
+                .ToList()
+        });
 }

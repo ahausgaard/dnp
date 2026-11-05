@@ -1,6 +1,7 @@
 using DTOs;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RepositoryContracts;
 using WebAPI.Mappings;
 
@@ -37,36 +38,31 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<UserDto>> GetSingle([FromRoute] int id)
+    public async Task<ActionResult<UserDto>> GetUser([FromRoute] int id)
     {
-        try
-        {
-            User user = await userRepo.GetSingleAsync(id);
-            
-            return Ok(user.ToDto());
-        }
-        catch (InvalidOperationException e)
-        {
-            return NotFound(e.Message);
-        }
+        UserDto? dto = await ProjectToDto(
+                userRepo.GetMany().Where(u => u.Id == id))
+            .SingleOrDefaultAsync();
+
+        if (dto is null)
+            return NotFound($"User with id {id} not found");
+
+        return Ok(dto);
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<UserDto>> GetAllUsers([FromQuery] string? userNameContains)
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers(
+        [FromQuery] string? userNameContains = null)
     {
-        IQueryable<User> users = userRepo.GetMany();
+        IQueryable<User> query = userRepo.GetMany();
 
         if (userNameContains is not null)
-        {
-            users = users.Where(x => x.UserName.Contains(userNameContains));
-        }
+            query = query.Where(u =>
+                u.UserName.ToLower().Contains(userNameContains.ToLower()));
 
-        List<UserDto> dtos = users
-            .ToList()
-            .Select(u => u.ToDto())
-            .ToList();
-        
-        return Ok(dtos);
+        List<UserDto> users = await ProjectToDto(query).ToListAsync();
+
+        return Ok(users);
     }
 
     [HttpPut("{id:int}")]
@@ -91,7 +87,7 @@ public class UsersController : ControllerBase
     }
     
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteSingle([FromRoute] int id)
+    public async Task<ActionResult> DeleteUser([FromRoute] int id)
     {
         try
         {
@@ -106,5 +102,9 @@ public class UsersController : ControllerBase
     
     private bool IsUserNameTaken(string userName, int? exceptUserId = null) => 
         userRepo.GetMany().Any(u => u.UserName == userName && u.Id != exceptUserId);
-    
+
+    // Translated by EF into SQL that selects only Id and UserName (never Password).
+    private static IQueryable<UserDto> ProjectToDto(IQueryable<User> query) =>
+        query.Select(u => new UserDto { Id = u.Id, UserName = u.UserName });
+
 }

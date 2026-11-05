@@ -1,6 +1,7 @@
 using DTOs;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RepositoryContracts;
 using WebAPI.Mappings;
 
@@ -53,47 +54,40 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<CommentDto>> GetSingle([FromRoute] int id)
+    public async Task<ActionResult<CommentDto>> GetComment([FromRoute] int id)
     {
-        try
-        {
-            Comment comment = await commentRepo.GetSingleAsync(id);
-            User author = await userRepo.GetSingleAsync(comment.User.Id);
-            
-            return Ok(comment.ToDto(author));
-        }
-        catch (InvalidOperationException e)
-        {
-            return NotFound(e.Message);
-        }
+        CommentDto? dto = await ProjectToDto(
+                commentRepo.GetMany().Where(c => c.Id == id))
+            .SingleOrDefaultAsync();
+
+        if (dto is null)
+            return NotFound($"Comment with id {id} not found");
+
+        return Ok(dto);
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<CommentDto>> GetAllComments(
+    public async Task<ActionResult<IEnumerable<CommentDto>>> GetComments(
         [FromQuery] int? userId, [FromQuery] string? userName, [FromQuery] int? postId)
     {
-        IQueryable<Comment> comments = commentRepo.GetMany();
-        
-        if (userId is null && userName is not null)
-        {
-            User? user = userRepo.GetMany()
-                .SingleOrDefault(u => u.UserName == userName);
-            if (user is null)
-                return NotFound($"User {userName} not found");
-            userId = user.Id;
-        }
-        
-        if (userId is not null)
-            comments = comments.Where(c => c.User.Id == userId);
-        
-        if (postId is not null)
-            comments = comments.Where(c => c.Post.Id == postId);
+        IQueryable<Comment> query = commentRepo.GetMany();
 
-        List<CommentDto> dtos = comments
-            .ToList()
-            .Select(c => c.ToDto(c.User))
-            .ToList();
-        
+        if (userId is not null)
+        {
+            query = query.Where(c => c.User.Id == userId);
+        }
+        else if (userName is not null)
+        {
+            if (!await userRepo.GetMany().AnyAsync(u => u.UserName == userName))
+                return NotFound($"User {userName} not found");
+            query = query.Where(c => c.User.UserName == userName);
+        }
+
+        if (postId is not null)
+            query = query.Where(c => c.Post.Id == postId);
+
+        List<CommentDto> dtos = await ProjectToDto(query).ToListAsync();
+
         return Ok(dtos);
     }
 
@@ -115,7 +109,7 @@ public class CommentsController : ControllerBase
     }
     
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteSingle([FromRoute] int id)
+    public async Task<ActionResult> DeleteComment([FromRoute] int id)
     {
         try
         {
@@ -127,4 +121,14 @@ public class CommentsController : ControllerBase
             return NotFound(e.Message);
         }
     }
+
+    // Translated by EF into a single SQL query (joins Users).
+    private static IQueryable<CommentDto> ProjectToDto(IQueryable<Comment> query) =>
+        query.Select(c => new CommentDto
+        {
+            Id = c.Id,
+            Body = c.Body,
+            PostId = c.Post.Id,
+            Author = new UserDto { Id = c.User.Id, UserName = c.User.UserName }
+        });
 }
